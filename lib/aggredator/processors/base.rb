@@ -6,7 +6,7 @@ module Aggredator
       
       def rule
         unless self.class.respond_to?(:rule)
-          raise NotImplementedError("Not implemented class method rule in #{self.class.name}")
+          raise NotImplementedError.new("Not implemented class method rule in #{self.class.name}")
         end
     
         self.class.rule

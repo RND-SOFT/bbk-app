@@ -1,4 +1,4 @@
-module AggredatorClient
+module Aggredator
 
   class Dispatcher
     class Route

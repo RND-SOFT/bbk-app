@@ -8,7 +8,7 @@ module Aggredator
   
       def initialize(delivery_info, properties, body)
         unless properties.respond_to? :to_h
-          raise Dispatcher::UndeliverableError.new('Properties mus be a Hash')
+          raise Dispatcher::UndeliverableError.new('Properties must be a Hash')
         end
   
         @delivery_info = delivery_info

@@ -27,4 +27,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'simplecov-console'
   spec.add_development_dependency 'rubycritic'
   spec.add_development_dependency 'faker', '~> 1.9.6'
+  spec.add_development_dependency 'bunny-mock', '~> 1.7.0'
+  spec.add_development_dependency 'activerecord', '~> 6.0'
+  spec.add_development_dependency 'sqlite3', '~> 1.4'
+  spec.add_development_dependency 'database_cleaner', '~> 1.7.0'
 end

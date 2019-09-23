@@ -2,6 +2,7 @@ require 'aggredator/dispatcher/message'
 require 'aggredator/dispatcher/result'
 require 'aggredator/dispatcher/route'
 require 'aggredator/dispatcher/transformer'
+require 'aggredator/dispatcher/undeliverable_error'
 
 module Aggredator
   class Dispatcher
@@ -22,13 +23,13 @@ module Aggredator
     end
 
     def before(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? AggredatorClient::Dispatcher::Transformer
+      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? Transformer
 
       @before_transformers << transformer
     end
 
     def after(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? AggredatorClient::Dispatcher::Transformer
+      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? Transformer
 
       @after_transformers << transformer
     end
@@ -49,7 +50,7 @@ module Aggredator
 
       $logger&.debug "Get message: body = #{body.inspect}, properties = #{properties.inspect}."
 
-      msg = transform_incomming(AggredatorClient::Dispatcher::Message.new(delivery_info, properties, body))
+      msg = transform_incomming(Aggredator::Dispatcher::Message.new(delivery_info, properties, body))
 
       results = executor.call(msg) do |m|
         process_incomming_message(mqmsg, m)
@@ -105,7 +106,7 @@ module Aggredator
 
         # Отфильтровываем результаты по типам, для того чтобы корректно обрабатывать сообщения
         # неправильного формата или с отсутствием ответов от процессора.
-        [results].flatten.select {|e| e.is_a? AggredatorClient::Dispatcher::Result }.map {|res| transform_outcoming(res, incmsg) }
+        [results].flatten.select {|e| e.is_a? Aggredator::Dispatcher::Result }.map {|res| transform_outcoming(res, incmsg) }
       end
 
       def send_results(mqmsg, incmsg, results)

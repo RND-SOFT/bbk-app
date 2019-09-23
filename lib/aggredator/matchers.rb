@@ -81,7 +81,6 @@ module Aggredator
 
   class DeliveryInfoMatcher < BaseMatcher
 
-
     def initialize(rule)
       @rule = rule.with_indifferent_access
     end
@@ -97,7 +96,10 @@ module Aggredator
       result = super
       if !result && (key_rule = rule[:routing_key])
         regexp_rule = Regexp.new("\\A#{key_rule.gsub('.', '\.').gsub('*', '\S+').gsub('#', '.*')}\\Z")
-        result = regexp_rule.match?(data[:routing_key])
+        check = regexp_rule.match?(data[:routing_key])
+        result = if check
+          {'routing_key' => data[:routing_key]}
+        end
       end
       result
     end
@@ -107,9 +109,9 @@ module Aggredator
   class FullMatcher < BaseMatcher
 
     def initialize(mrule, prule, drule)
-      @mm = AggredatorClient::MetadataMatcher.new(mrule)
-      @pm = AggredatorClient::PayloadMatcher.new(prule)
-      @dm = AggredatorClient::DeliveryInfoMatcher.new(drule)
+      @mm = Aggredator::MetadataMatcher.new(mrule)
+      @pm = Aggredator::PayloadMatcher.new(prule)
+      @dm = Aggredator::DeliveryInfoMatcher.new(drule)
       @rule = [mrule, prule, drule]
     end
 

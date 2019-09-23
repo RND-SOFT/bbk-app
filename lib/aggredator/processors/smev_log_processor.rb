@@ -4,25 +4,23 @@ module Aggredator
 
     class SmevLogRequest < Action
 
-      attr_accessor :model_class, :client, :smev_service_name
+      attr_accessor :model_class, :smev_service_name, :service_name
 
       def self.rule
-        [:meta, Aggredator::Api::ExchangeLogRequest.meta_match_rule]
+        [:meta, Aggredator::Api::Actions::ExchangeLogRequest.meta_match_rule]
       end
 
       def self.action
-        Aggredator::Api::ExchangeLogRequest.type
+        Aggredator::Api::Actions::ExchangeLogRequest.type
       end
 
-      def initialize(model_class, client, smev_service_name)
+      def initialize(model_class, smev_service_name, service_name)
         raise TypeError.new("#{model_class} is not ActiveRecord::Base") unless model_class < ActiveRecord::Base
         raise ArgumentError.new("#{model_class} hasn't column ticket_id") unless model_class.column_names.include? 'ticket_id'
-        raise TypeError.new('Client is not AggredatorClient::Client') unless client.is_a? Aggredator::Client
-
         super
         @model_class = model_class
-        @client = client
         @smev_service_name = smev_service_name
+        @service_name = service_name
       end
 
       def process(message, results: [])
@@ -31,7 +29,7 @@ module Aggredator
         if (_ticket = model_class.find_by_ticket_id(message.headers[:ticket]))
           results << Aggredator::Dispatcher::Result.new(
             "mq://inner@service.#{smev_service_name}.request",
-            Aggredator::Api::ExchangeLogRequest.new(message.headers.except(:user_id), message.payload)
+            Aggredator::Api::Actions::ExchangeLogRequest.new(message.headers.except(:user_id), message.payload)
           )
         else
           error_msg = make_error_answer "Couldn't find request with ticket id: #{message.headers[:ticket].inspect}", message.properties, message.payload
@@ -46,10 +44,11 @@ module Aggredator
 
       def make_error_answer(message, properties, meta)
         $logger&.error "Build error message: #{message}. Properties: #{properties.inspect}"
-        Aggredator::Api::ExchangeLogResponse.new(
+        Aggredator::Api::Responses::ExchangeLogResponse.new(
           {
-            correlation_id: properties[:message_id],
-            ticket:         properties.dig(:headers, :ticket)
+            correlation_id: properties[:message_id] || properties.dig(:headers, :message_id),
+            ticket:         properties.dig(:headers, :ticket),
+            service:        service_name
           },
           {
             success: false,

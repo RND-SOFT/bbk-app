@@ -5,6 +5,7 @@ require 'faker'
 require 'securerandom'
 require 'aggredator/api'
 require 'aggredator/client'
+require 'active_record'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
   SimpleCov::Formatter::HTMLFormatter,
@@ -34,4 +35,4 @@ end
 
 Faker::Config.locale = 'ru'
 
-Dir["./spec/**/helpers/*.rb"].each {|f| require f}
+Dir["./spec/support/**/*.rb"].sort.each {|f| require f}

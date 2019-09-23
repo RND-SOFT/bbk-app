@@ -6,7 +6,7 @@ module Aggredator
 
       attr_reader :wrapped, :args, :kwargs
 
-      delegate :action, :meta_match_rule, to: :wrapped
+      delegate :action, :rule, to: :wrapped
 
       def initialize(wrapped, *args, **kwargs)
         @wrapped = wrapped
