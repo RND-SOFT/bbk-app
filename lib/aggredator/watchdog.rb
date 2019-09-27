@@ -22,11 +22,11 @@ module Aggredator
         Thread.current.name = 'WatchDog::pinger'
         loop do
           @client.direct_publish(
-            queue.name,
+            queue,
             Aggredator::Api::Ping.new(
               {
                 message_id: SecureRandom.hex,
-                reply_to:   queue.name
+                reply_to:   queue
               }, 'watchdog ping'
             )
           )

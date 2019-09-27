@@ -9,7 +9,7 @@ RSpec.describe Aggredator::Watchdog do
   let(:timeout) { 1 }
   let(:delay) { 3 }
 
-  subject { described_class.new client, queue: queue, watcher_delay: watcher_delay, timeout: 1, delay: delay }
+  subject { described_class.new client, queue: queue.name, watcher_delay: watcher_delay, timeout: 1, delay: delay }
 
   it 'call start' do
     expect(subject).to receive(:startpinger)
