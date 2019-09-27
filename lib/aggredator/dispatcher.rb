@@ -35,6 +35,7 @@ module Aggredator
     end
 
     def run(block: true)
+      @watchdog.start if @watchdog.present?
       queue.subscribe(block: block, manual_ack: true) do |delivery_info, properties, body|
         mqmsg = { delivery_info: delivery_info, properties: properties, body: body }
         ActiveSupport::Notifications.instrument 'dispatcher.request', msg: mqmsg, queue: queue do
