@@ -112,7 +112,7 @@ module Aggredator
 
       def send_results(mqmsg, incmsg, results)
         results.each do |res_msg|
-          res_msg.properties[:message_id] ||= incmsg.reply_message_id(res_msg.route)
+          res_msg.properties[:message_id] ||= res_msg.message.headers[:message_id] || incmsg.reply_message_id(res_msg.route)
         end
 
         publish_results(results).then do |_successes|

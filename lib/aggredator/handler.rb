@@ -13,10 +13,6 @@ module Aggredator
       end
     end
 
-    def wrap(klass, *args)
-      Aggredator::Factory.new(klass, *args)
-    end
-
     # регистрация обработчика
     # тип матчера, парметры матчера, Обработчик | Класс обработчика, [аргументы обработчика]
     def register(*args, &block)
