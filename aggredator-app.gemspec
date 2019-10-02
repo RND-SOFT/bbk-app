@@ -5,7 +5,7 @@ require "aggredator/app/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "aggredator-app"
-  spec.version       = Aggredator::App::VERSION
+  spec.version       = ENV['BUILDVERSION'].to_i > 0 ? "#{Aggredator::App::VERSION}.#{ENV['BUILDVERSION'].to_i}" : Aggredator::App::VERSION
   spec.authors       = ["Samoilenko Yuri"]
   spec.email         = ["kinnalru@gmail.com"]
 
