@@ -27,13 +27,13 @@ RSpec.describe Aggredator::Dispatcher do
   let(:result1) do
     Aggredator::Dispatcher::Result.new(
       "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, incmsg1.body)
+      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
     )
   end
   let(:result1_dup) do
     Aggredator::Dispatcher::Result.new(
       "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, incmsg1.body)
+      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
     )
   end
   let(:mqmsg){ { delivery_info: incmsg1.delivery_info, properties: incmsg1.properties, body: incmsg1.body } }

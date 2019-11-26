@@ -47,7 +47,7 @@ RSpec.describe Aggredator::Watchdog do
     messages = channel.default_exchange.messages
     expect(messages.size).to eq 2
     body, props, *_  = messages.first
-    expect(body).to eq 'watchdog ping'
+    expect(body).to eq JSON.generate('watchdog ping')
     expect(props[:routing_key]).to eq queue.name
     
     headers = props[:headers]
