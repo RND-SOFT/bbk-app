@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git@br.rnds.pro:aggredator/gems/rabbit-client.git
-  revision: 9950db5104641f77cff7e8c808669c2b03b2b36a
+  revision: 0f1766c5c3bb9cb120680f2ec5f1c88999914e03
   branch: master
   specs:
     aggredator-client (0.1.0)
