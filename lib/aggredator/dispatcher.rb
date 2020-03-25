@@ -23,13 +23,13 @@ module Aggredator
     end
 
     def before(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? Transformer
+      raise TypeError.new("no implicit conversion of #{transformer.class} into #{Transformer.to_s}") unless transformer.is_a? Transformer
 
       @before_transformers << transformer
     end
 
     def after(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into AggredatorClient::Dispatcher::Transformer") unless transformer.is_a? Transformer
+      raise TypeError.new("no implicit conversion of #{transformer.class} into #{Transformer.to_s}") unless transformer.is_a? Transformer
 
       @after_transformers << transformer
     end

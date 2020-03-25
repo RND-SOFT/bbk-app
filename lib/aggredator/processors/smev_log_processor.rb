@@ -11,7 +11,7 @@ module Aggredator
       end
 
       def self.action
-        Aggredator::Api::Actions::ExchangeLogRequest.type
+        Aggredator::Api::Actions::ExchangeLogRequest.action
       end
 
       def initialize(model_class, smev_service_name, service_name)
