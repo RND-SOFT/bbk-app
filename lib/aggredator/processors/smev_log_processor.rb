@@ -14,11 +14,8 @@ module Aggredator
       end
 
       def initialize(model_class, smev_service_name, service_name)
-        unless model_class < ActiveRecord::Base
-          raise TypeError, "#{model_class} is not ActiveRecord::Base"
-        end
-        unless model_class.column_names.include? 'ticket_id'
-          raise ArgumentError, "#{model_class} hasn't column ticket_id"
+        unless model_class.respond_to?(:find_by_ticket_id)
+          raise TypeError, "#{model_class} is not implement find_by_ticket_id"
         end
 
         super

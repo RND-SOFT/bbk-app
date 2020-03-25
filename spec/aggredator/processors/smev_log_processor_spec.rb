@@ -28,7 +28,7 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
     it 'invalid model type' do
       expect { described_class.new Hash, smev_service_name, service_name }.to raise_error(TypeError)
     end
-
+    
   end
 
   context 'process message' do
