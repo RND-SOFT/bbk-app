@@ -14,7 +14,7 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
   end
 
   it 'check action' do
-    expect(described_class.action).to eq Aggredator::Api::Actions::ExchangeLogRequest.type
+    expect(described_class.action).to eq Aggredator::Api::Actions::ExchangeLogRequest.action
   end
 
   context 'ctor' do
