@@ -38,6 +38,11 @@ module Aggredator
         raise "callable object or class missing: #{args.inspect}"
       end
 
+      matcher = Aggredator::Matchers.create(type, *[rule].flatten)
+      @handlers.each do |(m, c)|
+        warn("Handler with same matcher already registered: #{m.inspect}") if m == matcher
+      end
+
       @handlers[Aggredator::Matchers.create(type, *[rule].flatten)] = callable
     end
 

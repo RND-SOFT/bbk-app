@@ -23,6 +23,18 @@ module Aggredator
 
     attr_reader :rule
 
+    def hash
+      (self.class.to_s + self.rule.to_s).hash
+    end
+
+    def ==(other)
+      return self.class == other.class && self.rule == other.rule
+    end
+    
+    def eql?(other)
+      self == other
+    end
+
     def keys_deep(data)
       data.inject([]) do |res, p|
         k, _v = p

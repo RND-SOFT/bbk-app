@@ -35,6 +35,20 @@ RSpec.describe Aggredator::Handler do
       expect(value).to be_a Aggredator::Factory
       expect(value.klass).to eq processor
     end
+    
+    it 'double register processor' do
+      handlers = subject.instance_variable_get('@handlers')
+      expect {
+        subject.register processor
+        subject.register processor
+      }.to change { handlers.size }.from(0).to(1)
+      key, value = handlers.first
+
+      expect(key).to be_a Aggredator::BaseMatcher
+
+      expect(value).to be_a Aggredator::Factory
+      expect(value.klass).to eq processor
+    end
 
     it 'register block' do
       handlers = subject.instance_variable_get('@handlers')
