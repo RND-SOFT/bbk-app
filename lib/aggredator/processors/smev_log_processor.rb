@@ -1,9 +1,8 @@
+# frozen_string_literal: true
+
 module Aggredator
-
   module Processors
-
     class SmevLogRequest < Action
-
       attr_accessor :model_class, :smev_service_name, :service_name
 
       def self.rule
@@ -15,8 +14,13 @@ module Aggredator
       end
 
       def initialize(model_class, smev_service_name, service_name)
-        raise TypeError.new("#{model_class} is not ActiveRecord::Base") unless model_class < ActiveRecord::Base
-        raise ArgumentError.new("#{model_class} hasn't column ticket_id") unless model_class.column_names.include? 'ticket_id'
+        unless model_class < ActiveRecord::Base
+          raise TypeError, "#{model_class} is not ActiveRecord::Base"
+        end
+        unless model_class.column_names.include? 'ticket_id'
+          raise ArgumentError, "#{model_class} hasn't column ticket_id"
+        end
+
         super
         @model_class = model_class
         @smev_service_name = smev_service_name
@@ -29,7 +33,7 @@ module Aggredator
         if (_ticket = model_class.find_by_ticket_id(message.headers[:ticket]))
           results << Aggredator::Dispatcher::Result.new(
             "mq://inner@service.#{smev_service_name}.request",
-            Aggredator::Api::Actions::ExchangeLogRequest.new(message.headers.except(:user_id), message.payload)
+            Aggredator::Api::Actions::ExchangeLogRequest.new(message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload)
           )
         else
           error_msg = make_error_answer "Couldn't find request with ticket id: #{message.headers[:ticket].inspect}", message.properties, message.payload
@@ -47,21 +51,16 @@ module Aggredator
         Aggredator::Api::Responses::ExchangeLogResponse.new(
           {
             correlation_id: properties[:message_id] || properties.dig(:headers, :message_id),
-            ticket:         properties.dig(:headers, :ticket),
-            service:        service_name
+            ticket: properties.dig(:headers, :ticket),
+            service: service_name
           },
           {
             success: false,
             message: message,
-            meta:    meta
+            meta: meta
           }
         )
       end
-
     end
-    
   end
-
 end
-
-
