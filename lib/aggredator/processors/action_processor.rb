@@ -41,8 +41,10 @@ module Aggredator
         else
           raise "callable object or class missing: #{args.inspect}"
         end
-  
-        raise "action #{action.to_s.inspect} already registered" if @actions.key?(action.to_s)
+
+        if @actions.key?(action.to_s)
+          warn("Action with same name already registered: #{action}")
+        end
   
         @actions[action.to_s] = callable
       end
