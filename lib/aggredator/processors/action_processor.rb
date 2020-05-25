@@ -43,7 +43,7 @@ module Aggredator
         end
 
         if @actions.key?(action.to_s)
-          warn("Action with same name already registered: #{action}")
+          warn("Action with same name already registered: #{action}. Args: #{args.inspect}. Backtrace: #{caller.inspect}")
         end
   
         @actions[action.to_s] = callable
