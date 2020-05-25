@@ -35,7 +35,8 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       expect(callable.instanceargs).to eq args + [proc_obj]
     end
 
-    it 'register action processor twice' do
+    xit 'register action processor twice' do
+      # now we can register processor twice with override semantic
       subject.register processor
       expect { subject.register processor }.to raise_error(RuntimeError, /already registered/)
     end
