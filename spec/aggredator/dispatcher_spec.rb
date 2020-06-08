@@ -173,6 +173,14 @@ RSpec.describe Aggredator::Dispatcher do
       sleep 12
     end
 
+    it '#set executor' do
+      executor = Aggredator::Executor::Default.new
+      expect {
+        dispatcher.executor = executor
+      }.to change {executor.dispatcher}.to(dispatcher)
+      expect(dispatcher.executor).to eq executor
+    end
+
     describe '#process_request' do
       class MockTransformer < Aggredator::Dispatcher::Transformer
 

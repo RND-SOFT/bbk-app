@@ -18,8 +18,7 @@ module Aggredator
       @domains = domains
       @watchdog = watchdog
 
-      @executor = executor
-      @executor.dispatcher = self
+      self.executor = executor
     end
 
     def before(transformer)
@@ -80,6 +79,11 @@ module Aggredator
       end
 
       client.publish(route.routing_key, result.message, exchange: ex, opts: result.properties)
+    end
+
+    def executor=(executor)
+      @executor = executor
+      @executor.dispatcher = self
     end
 
     private

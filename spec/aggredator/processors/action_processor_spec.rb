@@ -63,6 +63,15 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       expect { subject.register action, nil }.to raise_error(RuntimeError, /callable object or class missing/)
     end
 
+    it 'double action registration' do
+      subject.register action, proc_obj
+      expect(subject).to receive(:warn).with(/Action with same name already registered/)
+      expect {
+        subject.register action, proc_obj
+      }.not_to raise_error
+    end
+
+
   end
 
   context 'process message' do
