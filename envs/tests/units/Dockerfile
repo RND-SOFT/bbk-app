@@ -32,7 +32,6 @@ RUN set -ex \
   && gem source --add http://${GEM_STORAGE_AUTH}@nexus.rnds.local/repository/internal/ \
   && gem install bundler && gem update bundler \
   && ping -c 1 nexus.rnds.local \
-  && gem sources \
   && bundle install --jobs=3 --full-index \
   && rm -rf /tmp/* /var/tmp/* /usr/src/ruby /root/.gem /usr/local/bundle/cache
 
