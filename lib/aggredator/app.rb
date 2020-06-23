@@ -1,3 +1,5 @@
+require 'aggredator/client'
+
 require 'aggredator/version'
 require 'aggredator/executor'
 require 'aggredator/factory'

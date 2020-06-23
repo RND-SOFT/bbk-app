@@ -1,17 +1,12 @@
-require "bundler/setup"
+ENV['RAILS_ENV'] ||= 'test'
+
 require 'simplecov'
 require 'simplecov-console'
-require 'faker'
-require 'securerandom'
-require 'aggredator/api'
-require 'aggredator/client'
-require 'active_record'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-  SimpleCov::Formatter::HTMLFormatter,
-  SimpleCov::Formatter::Console
-])
-
+                                                                 SimpleCov::Formatter::HTMLFormatter, # for gitlab
+                                                                 SimpleCov::Formatter::Console # for developers
+                                                               ])
 
 SimpleCov.start do
   add_filter do |source_file|
@@ -19,7 +14,12 @@ SimpleCov.start do
   end
 end
 
-require "aggredator/app"
+require 'bundler'
+require "bundler/setup"
+Bundler.require(:default, :development, :test)
+
+$root = File.join(File.dirname(__dir__), 'spec')
+Dir[File.join(__dir__, 'support', '**', '*.rb')].sort.each { |f| require f}
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -33,6 +33,3 @@ RSpec.configure do |config|
   end
 end
 
-Faker::Config.locale = 'ru'
-
-Dir["./spec/support/**/*.rb"].sort.each {|f| require f}
