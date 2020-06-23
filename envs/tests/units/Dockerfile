@@ -29,6 +29,7 @@ ADD Gemfile Gemfile.lock *.gemspec /home/app/
 ADD lib/aggredator/app/version.rb /home/app/lib/aggredator/app/
 
 RUN set -ex \
+  && apk add --no-cache sqlite-dev \
   && gem source --add http://${GEM_STORAGE_AUTH}@nexus.rnds.local/repository/internal/ \
   && gem install bundler && gem update bundler \
   && ping -c 1 nexus.rnds.local \
