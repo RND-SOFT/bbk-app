@@ -30,7 +30,7 @@ variables:
   stage: tests
   variables:
     COMPOSE_FILE: envs/tests/units/docker-compose.yml
-    COMPOSE_PROJECT_NAME: aggapi_${CI_PIPELINE_ID}_${CI_JOB_ID}
+    COMPOSE_PROJECT_NAME: aggapp_${CI_PIPELINE_ID}_${CI_JOB_ID}
     GIT_BRANCH: ${CI_COMMIT_REF_NAME}
     GIT_COMMIT: ${CI_COMMIT_SHA}
   script:
