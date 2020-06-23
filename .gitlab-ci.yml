@@ -28,6 +28,7 @@ test:
   variables:
     GITLAB: https://br.rnds.pro
   script:
+    - gem source --add http://${GEM_STORAGE_CREDS}@nexus.rnds.local/repository/internal/
     - bundle install --jobs=3 --path vendor/bundle && bundle package --all
     - bundle exec rspec
     
