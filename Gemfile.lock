@@ -1,10 +1,10 @@
 PATH
   remote: .
   specs:
-    aggredator-app (1.0.1)
+    aggredator-app (2.0.0)
       activesupport
-      aggredator-api (~> 1.0)
-      aggredator-client (~> 1.0)
+      aggredator-api (~> 2.0)
+      aggredator-client (~> 2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -25,12 +25,12 @@ GEM
       zeitwerk (~> 2.2, >= 2.2.2)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
-    aggredator-api (1.0.1.32201)
+    aggredator-api (2.0.0.32204)
       active_interaction
       activesupport
-    aggredator-client (1.0.0.32208)
+    aggredator-client (2.0.0.32217)
       activesupport
-      aggredator-api (~> 1)
+      aggredator-api (~> 2.0)
       bunny (~> 2.14.2)
       concurrent-ruby (~> 1.1.5)
     amq-protocol (2.3.1)
