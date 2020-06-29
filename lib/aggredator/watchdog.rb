@@ -23,7 +23,7 @@ module Aggredator
         loop do
           @client.direct_publish(
             queue,
-            Aggredator::Api::Ping.new(
+            Aggredator::Api::V1::Ping.new(
               {
                 message_id: SecureRandom.hex,
                 reply_to:   queue

@@ -25,7 +25,7 @@ GEM
       zeitwerk (~> 2.2, >= 2.2.2)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
-    aggredator-api (2.0.0.32204)
+    aggredator-api (2.0.4)
       active_interaction
       activesupport
     aggredator-client (2.0.0.32217)
@@ -102,7 +102,7 @@ GEM
       rspec-core (>= 2, < 4, != 2.12.0)
     ruby_parser (3.14.2)
       sexp_processor (~> 4.9)
-    rubycritic (4.5.0)
+    rubycritic (4.5.1)
       flay (~> 2.8)
       flog (~> 4.4)
       launchy (>= 2.0.0)
@@ -135,7 +135,7 @@ GEM
       coercible (~> 1.0)
       descendants_tracker (~> 0.0, >= 0.0.3)
       equalizer (~> 0.0, >= 0.0.9)
-    zeitwerk (2.3.0)
+    zeitwerk (2.3.1)
 
 PLATFORMS
   ruby

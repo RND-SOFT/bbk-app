@@ -1,6 +1,6 @@
 require 'active_support'
 
-require 'aggredator/api'
+require 'aggredator/api/v1_compat'
 require 'aggredator/processors/base'
 require 'aggredator/processors/action_processor'
 require 'aggredator/processors/action_response_processor'
