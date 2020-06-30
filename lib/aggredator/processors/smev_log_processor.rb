@@ -13,12 +13,12 @@ module Aggredator
         Aggredator::Api::Actions::ExchangeLogRequest.action
       end
 
-      def initialize(model_class, smev_service_name, service_name)
+      def initialize(model_class, smev_service_name, service_name, **kwargs)
         unless model_class.respond_to?(:find_by_ticket_id)
           raise TypeError, "#{model_class} is not implement find_by_ticket_id"
         end
 
-        super
+        super(**kwargs)
         @model_class = model_class
         @smev_service_name = smev_service_name
         @service_name = service_name
