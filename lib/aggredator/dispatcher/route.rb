@@ -1,8 +1,8 @@
-module Aggredator
+# frozen_string_literal: true
 
+module Aggredator
   class Dispatcher
     class Route
-
       attr_accessor :uri, :scheme, :domain, :routing_key
 
       # Example: mq://gw@service.smev.request
@@ -20,8 +20,13 @@ module Aggredator
         @uri.to_s
       end
 
+      def ==(other)
+        if other.is_a?(String)
+          to_s == other
+        else
+          super
+        end
+      end
     end
-
   end
-
 end
