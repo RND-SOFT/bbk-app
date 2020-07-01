@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    aggredator-app (2.0.0)
+    aggredator-app (2.0.1)
       activesupport
       aggredator-api (~> 2.0)
       aggredator-client (~> 2.0)
@@ -28,7 +28,7 @@ GEM
     aggredator-api (2.0.4)
       active_interaction
       activesupport
-    aggredator-client (2.0.0.32217)
+    aggredator-client (2.0.1)
       activesupport
       aggredator-api (~> 2.0)
       bunny (~> 2.14.2)
