@@ -13,7 +13,7 @@ module Aggredator
 
       attr_reader :logger
 
-      def initialize(logger: $logger, **_args)
+      def initialize(*_args, logger: $logger, **_kwargs)
         @logger = logger || Logger.new(IO::NULL)
       end
 
