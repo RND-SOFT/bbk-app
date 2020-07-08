@@ -104,7 +104,7 @@ module Aggredator
         matched, callback = @observer.match(incmsg.properties, incmsg.body, incmsg.delivery_info)
 
         results = []
-        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched do
+        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, processor: callback do
           watchdog&.touch
           callback.call(incmsg, results: results)
         end
