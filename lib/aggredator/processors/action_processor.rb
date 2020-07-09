@@ -52,8 +52,9 @@ module Aggredator
       def process(message, results: [])
         current_action = (message.headers[:action] || 'default').to_s
         $logger&.debug "ActionRequest[#{current_action.inspect}] request: #{message.properties.inspect}."
+        handler = @actions[current_action]
   
-        if (handler = @actions[current_action])
+        if handler.present?
           ActiveSupport::Notifications.instrument 'action_processor.action', action: current_action, headers: message.headers do
             handler.call(message, results: results)
           end
@@ -69,7 +70,7 @@ module Aggredator
       rescue StandardError => e
         $logger&.error "Exception: #{e.inspect}"
         $logger&.error e.backtrace.join("\n")
-        ActiveSupport::Notifications.instrument 'action_processor.exception', action: current_action, headers: message.headers, exception: e
+        ActiveSupport::Notifications.instrument 'action_processor.exception', action: current_action, headers: message.headers, exception: e, processor: handler
         results.clear
         results << Aggredator::Dispatcher::Result.new(
           "mq://outer@#{message.reply_to}",

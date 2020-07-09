@@ -104,7 +104,8 @@ module Aggredator
         matched, callback = @observer.match(incmsg.properties, incmsg.body, incmsg.delivery_info)
 
         results = []
-        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, processor: callback do
+        is_unknown = @observer.instance_variable_get('@default') == callback
+        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, processor: callback, unknown: is_unknown do
           watchdog&.touch
           callback.call(incmsg, results: results)
         end
@@ -112,6 +113,9 @@ module Aggredator
         # Отфильтровываем результаты по типам, для того чтобы корректно обрабатывать сообщения
         # неправильного формата или с отсутствием ответов от процессора.
         [results].flatten.select {|e| e.is_a? Aggredator::Dispatcher::Result }.map {|res| transform_outcoming(res, incmsg) }
+      rescue => e
+        ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: mqmsg, match: matched, processor: callback, exception: e
+        raise
       end
 
       def send_results(mqmsg, incmsg, results)
