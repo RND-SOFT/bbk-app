@@ -14,7 +14,7 @@ module Aggredator
       attr_reader :logger
 
       def initialize(*_args, logger: $logger, **_kwargs)
-        @logger = logger || Logger.new(IO::NULL)
+        @logger = logger || ::Logger.new(IO::NULL)
       end
 
       def call(message, results: [])
