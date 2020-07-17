@@ -14,7 +14,7 @@ module Aggredator
       attr_reader :logger
 
       def initialize(*_args, logger: $logger, **_kwargs)
-        @logger = logger || ::Logger.new(IO::NULL)
+        @logger = logger || ::Logger.new(STDOUT)
       end
 
       def call(message, results: [])
@@ -40,16 +40,20 @@ module Aggredator
         )
       end
 
+      def logger
+        self
+      end
+
       def debug(msg)
-        logger.debug "[#{self.class}]: #{msg}"
+        @logger.debug "[#{self.class}]: #{msg}"
       end
 
       def info(msg)
-        logger.info "[#{self.class}]: #{msg}"
+        @logger.info "[#{self.class}]: #{msg}"
       end
 
       def error(msg)
-        logger.error "[#{self.class}]: #{msg}"
+        @logger.error "[#{self.class}]: #{msg}"
       end
     end
   end

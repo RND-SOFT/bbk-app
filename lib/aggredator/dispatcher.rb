@@ -101,13 +101,21 @@ module Aggredator
       end
 
       def process_incomming_message(mqmsg, incmsg)
-        matched, callback = @observer.match(incmsg.properties, incmsg.body, incmsg.delivery_info)
+        matched, processor = find_processor(incmsg)
 
         results = []
-        is_unknown = @observer.instance_variable_get('@default') == callback
-        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, processor: callback, unknown: is_unknown do
-          watchdog&.touch
-          callback.call(incmsg, results: results)
+        begin
+          is_unknown = @observer.instance_variable_get('@default') == processor
+          ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, unknown: is_unknown do
+            watchdog&.touch
+            processor.call(incmsg, results: results)
+          end
+        rescue => e
+          if processor.respond_to?(:on_error)
+            results = processor.on_error(incmsg, e)
+          else
+            raise
+          end
         end
 
         # Отфильтровываем результаты по типам, для того чтобы корректно обрабатывать сообщения
@@ -116,6 +124,12 @@ module Aggredator
       rescue => e
         ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: mqmsg, match: matched, processor: callback, exception: e
         raise
+      end
+
+      def find_processor(incmsg)
+        matched, callback = @observer.match(incmsg.properties, incmsg.body, incmsg.delivery_info)
+
+        return [matched, callback.is_a?(Aggredator::Factory) ? callback.create() : callback]
       end
 
       def send_results(mqmsg, incmsg, results)

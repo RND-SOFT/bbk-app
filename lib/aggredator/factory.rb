@@ -1,7 +1,7 @@
+# frozen_string_literal: true
+
 module Aggredator
-
   class Factory
-
     attr_accessor :klass, :instanceargs
 
     def initialize(klass, *args)
@@ -18,5 +18,4 @@ module Aggredator
     end
 
   end
-
 end
