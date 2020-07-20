@@ -16,9 +16,9 @@ module Aggredator
         @properties[:headers] ||= {}.with_indifferent_access
         @body = body
         @payload = begin
-                     JSON(body)
+                     JSON(body).with_indifferent_access
                    rescue StandardError
-                     {}
+                     {}.with_indifferent_access
                    end
   
         validate!
