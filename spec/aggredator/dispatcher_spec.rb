@@ -27,13 +27,13 @@ RSpec.describe Aggredator::Dispatcher do
   let(:result1) do
     Aggredator::Dispatcher::Result.new(
       "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
+      Aggredator::Api::V1::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
     )
   end
   let(:result1_dup) do
     Aggredator::Dispatcher::Result.new(
       "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
+      Aggredator::Api::V1::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
     )
   end
   let(:mqmsg){ { delivery_info: incmsg1.delivery_info, properties: incmsg1.properties, body: incmsg1.body } }
@@ -137,7 +137,7 @@ RSpec.describe Aggredator::Dispatcher do
     end
 
     it '#ack message on success send_results' do
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::Message.new({}))
+      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
       expect(client).to receive(:ack).with(incmsg1.delivery_tag)
       mqmsg = {}
       subject.send(:send_results, mqmsg, incmsg1, [result])
@@ -148,7 +148,7 @@ RSpec.describe Aggredator::Dispatcher do
 
     it '#reject message on return' do
       mqmsg = {}  
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::Message.new({}))
+      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
       expect(client).not_to receive(:ack).with(incmsg1.delivery_tag)
       expect(client).to receive(:reject).with(incmsg1.delivery_tag)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', hash_including(msg: mqmsg))
@@ -159,7 +159,7 @@ RSpec.describe Aggredator::Dispatcher do
     end
 
     it '#achtung on message reject' do
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::Message.new({}))
+      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
       mqmsg = {}
       allow(client).to receive(:reject).and_raise(StandardError)
       expect(STDERR).to receive(:puts).with(/\[CRITICAL\]/)

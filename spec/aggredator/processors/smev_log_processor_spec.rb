@@ -10,11 +10,11 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
     expect(rule).to be_a Array
     expect(rule.size).to eq 2
     expect(rule.first).to eq :meta
-    expect(rule.last).to eq Aggredator::Api::Actions::ExchangeLogRequest.meta_match_rule
+    expect(rule.last).to eq Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule
   end
 
   it 'check action' do
-    expect(described_class.action).to eq Aggredator::Api::Actions::ExchangeLogRequest.action
+    expect(described_class.action).to eq Aggredator::Api::V1::Actions::ExchangeLogRequest.action
   end
 
   context 'ctor' do
@@ -64,7 +64,7 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
       route = result.route
       expect(route.to_s).to eq "mq://inner@service.#{smev_service_name}.request"
       message = result.message
-      expect(message).to be_a Aggredator::Api::Actions::ExchangeLogRequest
+      expect(message).to be_a Aggredator::Api::V1::Actions::ExchangeLogRequest
       expect(message.headers[:ticket]).to eq request.ticket_id
     end
 
@@ -79,7 +79,7 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
       route = result.route
       expect(route.to_s).to eq "mq://outer@#{message.reply_to}"
       res_msg = result.message
-      expect(res_msg).to be_a Aggredator::Api::Responses::ExchangeLogResponse
+      expect(res_msg).to be_a Aggredator::Api::V1::Responses::ExchangeLogResponse
       headers = res_msg.headers
       expect(headers[:ticket]).to eq message.headers[:ticket]
       expect(headers[:correlation_id]).to eq message.message_id

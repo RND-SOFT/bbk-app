@@ -8,7 +8,7 @@ module Aggredator
       end
 
       def self.rule
-        [:meta, Aggredator::Api::Pong.meta_match_rule]
+        [:meta, Aggredator::Api::V1::Pong.meta_match_rule]
       end
 
       def process(*); end

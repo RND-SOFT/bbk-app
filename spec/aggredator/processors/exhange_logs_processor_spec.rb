@@ -6,11 +6,11 @@ RSpec.describe Aggredator::Processors::ExchangeLogsProcessor do
   subject { described_class.new service_name }
 
   it 'check rule' do
-    expect(described_class.rule).to match([:meta, Aggredator::Api::Actions::ExchangeLogRequest.meta_match_rule])
+    expect(described_class.rule).to match([:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule])
   end
 
   it 'check action' do
-    expect(described_class.action).to eq Aggredator::Api::Actions::ExchangeLogRequest.action
+    expect(described_class.action).to eq Aggredator::Api::V1::Actions::ExchangeLogRequest.action
   end
 
   context 'process message' do
@@ -41,7 +41,7 @@ RSpec.describe Aggredator::Processors::ExchangeLogsProcessor do
       expect(result).to be_a Aggredator::Dispatcher::Result
       expect(result.route.to_s).to eq "mq://inner@service.#{service_name}.request"
 
-      expect(result.message).to be_a Aggredator::Api::Actions::ExchangeLogRequest
+      expect(result.message).to be_a Aggredator::Api::V1::Actions::ExchangeLogRequest
       expect(result.message.headers[:ticket]).to eq ticket
       expect(result.message.headers[:reply_to]).to eq reply_to
     end

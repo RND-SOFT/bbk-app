@@ -6,11 +6,11 @@ module Aggredator
       attr_accessor :service_name
 
       def self.rule
-        [:meta, Aggredator::Api::Actions::ExchangeLogRequest.meta_match_rule]
+        [:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule]
       end
 
       def self.action
-        Aggredator::Api::Actions::ExchangeLogRequest.action
+        Aggredator::Api::V1::Actions::ExchangeLogRequest.action
       end
 
       def initialize(service_name, **kwargs)

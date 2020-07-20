@@ -7,7 +7,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     expect(rule).to be_a Array
     expect(rule.size).to eq 2
     expect(rule.first).to eq :meta
-    expect(rule.last).to eq Aggredator::Api::ActionRequest.meta_match_rule
+    expect(rule.last).to eq Aggredator::Api::V1::ActionRequest.meta_match_rule
   end
 
   context 'register' do
@@ -85,13 +85,13 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     let(:body) { JSON.generate({}) }
     let(:processor_cls) { Aggredator::Processors::PingProcessor }
     let(:properties) {
-      properties = Aggredator::Api::Ping.meta_match_rule
+      properties = Aggredator::Api::V1::Ping.meta_match_rule
       properties[:headers].merge!(
         message_id: SecureRandom.uuid,
         reply_to: SecureRandom.hex,
         user_id: SecureRandom.uuid,
         action: processor_cls.action,
-        type: Aggredator::Api::ActionRequest.type
+        type: Aggredator::Api::V1::ActionRequest.type
       )
       properties
     }
@@ -124,7 +124,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       msg = results.first
       expect(msg).to be_a Aggredator::Dispatcher::Result
       expect(msg.route.uri.to_s).to eq "mq://outer@#{message.reply_to}"
-      expect(msg.message).to be_a Aggredator::Api::Error
+      expect(msg.message).to be_a Aggredator::Api::V1::Error
     end
 
     it 'catch error' do
@@ -136,7 +136,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       msg = results.first
       expect(msg).to be_a Aggredator::Dispatcher::Result
       expect(msg.route.uri.to_s).to eq "mq://outer@#{message.reply_to}"
-      expect(msg.message).to be_a Aggredator::Api::Error
+      expect(msg.message).to be_a Aggredator::Api::V1::Error
     end
 
   end

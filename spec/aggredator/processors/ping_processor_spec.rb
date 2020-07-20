@@ -25,7 +25,7 @@ RSpec.describe Aggredator::Processors::PingProcessor do
     expect(rule).to be_a Array
     expect(rule.size).to eq 2
     expect(rule.first).to eq :meta
-    expect(rule.last).to eq Aggredator::Api::Ping.meta_match_rule
+    expect(rule.last).to eq Aggredator::Api::V1::Ping.meta_match_rule
   end
 
   it 'process message' do

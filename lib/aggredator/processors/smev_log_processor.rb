@@ -6,11 +6,11 @@ module Aggredator
       attr_accessor :model_class, :smev_service_name, :service_name
 
       def self.rule
-        [:meta, Aggredator::Api::Actions::ExchangeLogRequest.meta_match_rule]
+        [:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule]
       end
 
       def self.action
-        Aggredator::Api::Actions::ExchangeLogRequest.action
+        Aggredator::Api::V1::Actions::ExchangeLogRequest.action
       end
 
       def initialize(model_class, smev_service_name, service_name, **kwargs)
@@ -30,7 +30,7 @@ module Aggredator
         if (_ticket = model_class.find_by_ticket_id(message.headers[:ticket]))
           results << Aggredator::Dispatcher::Result.new(
             "mq://inner@service.#{smev_service_name}.request",
-            Aggredator::Api::Actions::ExchangeLogRequest.new(message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload)
+            Aggredator::Api::V1::Actions::ExchangeLogRequest.new(message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload)
           )
         else
           error_msg = make_error_answer "Couldn't find request with ticket id: #{message.headers[:ticket].inspect}", message.properties, message.payload
@@ -45,7 +45,7 @@ module Aggredator
 
       def make_error_answer(message, properties, meta)
         $logger&.error "Build error message: #{message}. Properties: #{properties.inspect}"
-        Aggredator::Api::Responses::ExchangeLogResponse.new(
+        Aggredator::Api::V1::Responses::ExchangeLogResponse.new(
           {
             correlation_id: properties[:message_id] || properties.dig(:headers, :message_id),
             ticket: properties.dig(:headers, :ticket),

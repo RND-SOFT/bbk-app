@@ -122,7 +122,7 @@ module Aggredator
         # неправильного формата или с отсутствием ответов от процессора.
         [results].flatten.select {|e| e.is_a? Aggredator::Dispatcher::Result }.map {|res| transform_outcoming(res, incmsg) }
       rescue => e
-        ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: mqmsg, match: matched, processor: callback, exception: e
+        ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: mqmsg, match: matched, processor: processor, exception: e
         raise
       end
 

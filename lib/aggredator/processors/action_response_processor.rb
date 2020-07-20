@@ -6,7 +6,7 @@ module Aggredator
     class ActionResponseProcessor < ActionProcessor
 
       def self.rule
-        [:meta, Aggredator::Api::ActionResponse.meta_match_rule]
+        [:meta, Aggredator::Api::V1::ActionResponse.meta_match_rule]
       end
 
     end

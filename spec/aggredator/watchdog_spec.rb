@@ -53,7 +53,7 @@ RSpec.describe Aggredator::Watchdog do
     headers = props[:headers]
     expect(headers[:reply_to]).to eq queue.name
     expect(headers).to have_key :message_id
-    expect(headers[:type]).to eq Aggredator::Api::Ping.type 
+    expect(headers[:type]).to eq Aggredator::Api::V1::Ping.type 
   end
 
 end

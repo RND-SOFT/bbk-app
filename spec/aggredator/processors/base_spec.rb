@@ -48,7 +48,7 @@ RSpec.describe Aggredator::Processors::Base do
   it 'make error' do
     context = {a: SecureRandom.hex}
     error_msg = subject.make_error_answer error_text, message, context
-    expect(error_msg).to be_a Aggredator::Api::Error
+    expect(error_msg).to be_a Aggredator::Api::V1::Error
     headers = error_msg.headers
     expect(headers[:correlation_id]).to eq message.message_id
     expect(headers[:original_user_id]).to eq message.user_id
