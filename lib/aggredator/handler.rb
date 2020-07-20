@@ -40,7 +40,7 @@ module Aggredator
 
       matcher = Aggredator::Matchers.create(type, *[rule].flatten)
       @handlers.each do |(m, c)|
-        warn("Handler with same matcher already registered: #{m.inspect}") if m == matcher
+        $logger&.warn("Handler with same matcher already registered: #{m.inspect}") if m == matcher
       end
 
       @handlers[Aggredator::Matchers.create(type, *[rule].flatten)] = callable

@@ -64,11 +64,17 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     end
 
     it 'double action registration' do
-      subject.register action, proc_obj
-      expect(subject).to receive(:warn).with(/Action with same name already registered/)
-      expect {
+      old = $logger
+      begin
+        $logger = double(:warn)
         subject.register action, proc_obj
-      }.not_to raise_error
+        expect($logger).to receive(:warn).with(/Action with same name already registered/)
+        expect {
+          subject.register action, proc_obj
+        }.not_to raise_error
+      ensure
+        $logger = old
+      end
     end
 
 
