@@ -1,4 +1,5 @@
 require 'aggredator/middleware/base'
+require 'aggredator/middleware/watchdog'
 
 module Aggredator
 

@@ -100,8 +100,7 @@ module Aggredator
     end
 
     def send_results incoming, results
-      answers, results = results.partition {|msg| msg.route.domain == ANSWER_DOMAIN}
-      answer = answers.first
+      answer = results.find {|msg| msg.route.domain == ANSWER_DOMAIN}
       Concurrent::Promises.zip_futures(*results.map{|result| publish_result(result)}).then do |_successes|
         incoming.consumer.ack(incoming, answer: answer)
       end.rescue do |*errors|
