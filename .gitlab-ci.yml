@@ -93,6 +93,20 @@ publish:
     - /^v\d$/
     - /^v\d\.\d$/
 
+# special for debug with non stable gem verion 
+publish-debug:
+  image: rnds/ruby:2.5-test
+  stage: deploy
+  when: manual
+  variables:
+    GEM_REPOSITORY: 'http://nexus.rnds.local/repository/internal'
+  script:
+    - gem nexus -V --url=$GEM_REPOSITORY --credential=$GEM_STORAGE_CREDS  `ls | grep gem$`
+  except:
+    - master
+    - /^v\d$/
+    - /^v\d\.\d$/
+
 badges:
   image: rnds/ruby:2.5-test
   stage: deploy
