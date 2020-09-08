@@ -1,7 +1,7 @@
 require 'aggredator/client'
 
 require 'aggredator/version'
-require 'aggredator/executor'
+require 'aggredator/middleware'
 require 'aggredator/factory'
 require 'aggredator/matchers'
 require 'aggredator/dispatcher'

@@ -1,260 +1,318 @@
-require 'bunny-mock'
-
 RSpec.describe Aggredator::Dispatcher do
-  let(:session){ BunnyMock.new.start }
-  let(:channel){ session.channel }
-  let(:main){ channel.exchange('main') }
-  let(:queue){ channel.queue('testqueue') }
-  let(:ex2){ channel.exchange('ex2') }
-  let(:client){ Aggredator::Client.new(main, 'client1') }
-  let(:domains) do
-    {
-      gw:    channel.header('gw', passive: true),
-      inner: client.exchange,
-      outer: client.default_exchange
-    }.with_indifferent_access
-  end
+
+  let(:consumer) { MockConsumer.new }
+  let(:incoming) { OpenStruct.new consumer: consumer, headers: {}, payload: {} }
   let(:observer) { ObserverMock.new }
-  let(:dispatcher){ described_class.new(queue, client, observer, domains) }
-  let(:incmsg1) do
-    msg_id = SecureRandom.hex(6)
-    Aggredator::Dispatcher::Message.new(
-      OpenStruct.new(delivery_tag: 11),
-      OpenStruct.new(headers: { user_id: 'test_user', message_id: msg_id }, user_id: 'test_user', message_id: msg_id),
-      { value: SecureRandom.hex(6) }.to_json
-    )
-  end
-  let(:result1) do
+  let(:result_message) {
     Aggredator::Dispatcher::Result.new(
-      "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::V1::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
+      'amqp://example.com',
+      Aggredator::Api::V1::Message.new({}, {})
     )
-  end
-  let(:result1_dup) do
+  }
+  let(:answer_message) {
     Aggredator::Dispatcher::Result.new(
-      "mq://outer@#{incmsg1.reply_to}",
-      Aggredator::Api::V1::Pong.new({ correlation_id: incmsg1.message_id }, JSON.load(incmsg1.body))
+      "amqp://#{Aggredator::Dispatcher::ANSWER_DOMAIN}@example.com",
+      Aggredator::Api::V1::Message.new({}, {})
     )
+  }
+  let(:publisher) { MockPublisher.new }
+  subject { described_class.new observer }
+
+  class MockConsumer
+
+    attr_reader :acked, :nacked
+
+    def initialize
+      @acked = []
+      @nacked = []
+    end
+
+    def ack incoming, answer: nil
+      @acked << {incoming: incoming, answer: answer}
+    end
+
+    def nack incoming
+      @nacked << incoming
+    end
+
   end
-  let(:mqmsg){ { delivery_info: incmsg1.delivery_info, properties: incmsg1.properties, body: incmsg1.body } }
 
-  describe 'dispatcher instance' do
-    subject{ dispatcher }
+  class MockPublisher
 
-    it { is_expected.to be_a(Aggredator::Dispatcher) }
+    attr_reader :futures
 
-    %w[before after].each do |type|
-      it "##{type} success" do
-        expect do
-          subject.send(type.to_sym, Aggredator::Dispatcher::Transformer.new)
-        end.to change { subject.send("#{type}_transformers".to_sym).count }.by(1)
-      end
-
-      it "##{type} error" do
-        expect do
-          subject.send(type.to_sym, ->{})
-        end.to raise_error(TypeError)
-      end
+    def initialize
+      @futures = []
     end
 
-    it '#publish' do
-      expect(client).to receive(:publish).with(result1.route.routing_key, result1.message, exchange: client.default_exchange, opts: result1.properties)
-      dispatcher.publish(result1)
+    def protocols
+      ["amqp"]
     end
-
-    it '#run' do
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request', hash_including(queue: queue)).and_call_original
-      expect(subject).to receive(:process_request)
-      subject.run block: false
-      queue.publish({})
+  
+    def publish result
+      f = Concurrent::Promises.resolvable_future
+      futures << f
+      f
     end
+  
+  end
 
-    def with_stoptest
-      stopresult = catch :stoptest do
-        yield
-      end
+  it 'ctor' do
+    instance = described_class.new observer
+    expect(instance.observer).to eq observer
+    expect(instance.logger).to be_a Logger
+    expect(instance.publishers).to be_empty
+    expect(instance.consumers).to be_empty
+    expect(instance.middlewares).to be_empty
+  end
 
-      expect(stopresult).to eq :stopped
-    end
-
-    it '#process_incomming_message' do
-      observer.set_result(result1)
-      results = dispatcher.send(:process_incomming_message, mqmsg, incmsg1)
-      expect(observer.msg).to eq(incmsg1)
-      expect(results.count).to eq(1)
-      expect(results.first).to eq(result1)
-    end
-
-    it '#send_results' do
-      expect(result1.properties[:message_id]).to eq nil
-      expect(dispatcher).to receive(:publish).with(result1).and_call_original
-      expect(client.default_exchange).to receive(:publish) do |payload, opts|
-        expect(payload).to eq result1.message.body
-        expect(opts).to include(message_id: result1.properties[:message_id], routing_key: 'test_user', user_id: client.name)
-        expect(opts[:headers]).to include(correlation_id: incmsg1.message_id)
-      end
-
-      promise = dispatcher.send(:send_results, mqmsg, incmsg1, [result1])
-
-      expect(promise).to be_a(Concurrent::Promises::Future)
-      expect(result1.properties[:message_id]).not_to eq nil
-    end
-
-    it '#send_results without message_id will generate same message_id' do
-      expect(dispatcher).to receive(:send_results).twice.and_wrap_original do |original, mq, msg, results|
-        expect(results.first.properties[:message_id]).to eq(nil)
-        original.call(mq, msg, results)
-      end
-
-      expect(client.default_exchange).to receive(:publish).twice do |_payload, opts|
-        expect(opts[:message_id]).not_to eq nil
-      end
-
-      expect(result1.properties[:message_id]).to be_nil
-      expect(result1_dup.properties[:message_id]).to be_nil
-
-      dispatcher.send(:send_results, mqmsg, incmsg1, [result1])
-
-      dispatcher.send(:send_results, mqmsg, incmsg1, [result1_dup])
-
-      expect(result1.properties[:message_id]).not_to be_nil
-      expect(result1_dup.properties[:message_id]).not_to be_nil
-
-      expect(result1_dup.properties[:message_id]).to eq(result1.properties[:message_id])
-    end
-
-    it '#error process request' do
-      tag = SecureRandom.hex
-      message = {delivery_info: OpenStruct.new(delivery_tag: tag)}
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', hash_including(msg: message))
-      expect(client).to receive(:reject).with(tag)
-      subject.process_request message
-    end
-
-    it '#publish without exchange' do
-      result = Aggredator::Dispatcher::Result.new("mq://#{SecureRandom.hex}@service.smev.request", {})
-      expect { subject.publish result }.to raise_error(ArgumentError, /no exchange for domain/)
-    end
-
-    it '#ack message on success send_results' do
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
-      expect(client).to receive(:ack).with(incmsg1.delivery_tag)
-      mqmsg = {}
-      subject.send(:send_results, mqmsg, incmsg1, [result])
-      ack_id = client.ack_map.keys.first
-      client.send(:on_confirm, ack_id, nil, false)
-      sleep 1
-    end
-
-    it '#reject message on return' do
-      mqmsg = {}  
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
-      expect(client).not_to receive(:ack).with(incmsg1.delivery_tag)
-      expect(client).to receive(:reject).with(incmsg1.delivery_tag)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', hash_including(msg: mqmsg))
-      subject.send(:send_results, mqmsg, incmsg1, [result])
-      message_id = client.ack_map.values.first
-      client.send(:on_return, client.exchange, nil, {message_id: message_id}, '{}')
-      sleep 1
-    end
-
-    it '#achtung on message reject' do
-      result = Aggredator::Dispatcher::Result.new("mq://#{domains.keys.sample}@service.smev.request", Aggredator::Api::V1::Message.new({}))
-      mqmsg = {}
-      allow(client).to receive(:reject).and_raise(StandardError)
-      expect(STDERR).to receive(:puts).with(/\[CRITICAL\]/)
-      expect(subject).to receive(:exit!).with(1)
-      expect(ActiveSupport::Notifications).to receive(:instrument)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', hash_including(msg: mqmsg))
-
-      subject.send(:send_results, mqmsg, incmsg1, [result])
-      message_id = client.ack_map.values.first
-      client.send(:on_return, client.exchange, nil, {message_id: message_id}, '{}')
-      sleep 12
-    end
-
-    it '#set executor' do
-      executor = Aggredator::Executor::Default.new
+  {
+    'register consumer' => [:register_consumer, :consumers],
+    'register publisher' => [:register_publisher, :publishers],
+    'register middleware' => [:register_middleware, :middlewares],
+  }.each do |name, (method_name, prop_name)|
+    it name do
+      value = SecureRandom.hex
       expect {
-        dispatcher.executor = executor
-      }.to change {executor.dispatcher}.to(dispatcher)
-      expect(dispatcher.executor).to eq executor
-    end
-
-    describe '#process_request' do
-      class MockTransformer < Aggredator::Dispatcher::Transformer
-
-        def transform(msg, *_args)
-          msg
-        end
-
-      end
-
-      let(:tr){ MockTransformer.new }
-      let(:out_tr) { MockTransformer.new }
-
-      before do
-        expect(tr).to receive(:transform).and_return(incmsg1)
-        dispatcher.before(tr)
-        dispatcher.after(out_tr)
-      end
-
-      it '#transform_incomming' do
-        expect(dispatcher).to receive(:transform_incomming).and_wrap_original do |original, msg|
-          expect(msg).to be_a(Aggredator::Dispatcher::Message)
-          expect(msg.message_id).to eq incmsg1.message_id
-          original.call(msg)
-          throw :stoptest, :stopped
-        end
-
-        with_stoptest do
-          dispatcher.process_request(mqmsg)
-        end
-      end
-
-      it '#transform_outcoming' do
-        expect(out_tr).to receive(:transform)
-        expect(dispatcher).to receive(:transform_outcoming).and_wrap_original do |original, result, original_message|
-          expect(result).to be_a(Aggredator::Dispatcher::Result)
-          expect(original_message.message_id).to eq incmsg1.message_id
-          original.call(result, original_message)
-          throw :stoptest, :stopped
-        end
-
-        with_stoptest do
-          dispatcher.process_request(mqmsg)
-        end
-      end
-
-      it '#process_incomming_message' do
-        expect(dispatcher).to receive(:process_incomming_message).and_wrap_original do |original, mq, msg|
-          expect(mq).to eq(mqmsg)
-          expect(msg).to eq(incmsg1)
-          original.call(mq, msg)
-          throw :stoptest, :stopped
-        end
-
-        with_stoptest do
-          dispatcher.process_request(mqmsg)
-        end
-      end
-
-      it '#send_results' do
-        expect(out_tr).to receive(:transform)
-        expect(dispatcher).to receive(:send_results).and_wrap_original do |original, mq, msg, results|
-          expect(mq).to eq(mqmsg)
-          expect(msg).to eq(incmsg1)
-          expect(results).to match_array(result1)
-          original.call(mq, msg, results)
-          throw :stoptest, :stopped
-        end
-
-        with_stoptest do
-          observer.set_result(result1)
-          dispatcher.process_request(mqmsg)
-        end
-      end
+        subject.send(method_name, value)
+      }.to change{subject.send(prop_name).size}.from(0).to(1)
     end
   end
-end
 
+  it 'process message' do
+    expect(subject.instance_variable_get('@stream')).to be_nil
+    thread = Thread.new do
+      subject.run
+    end
+    sleep 0.1
+    stream = subject.instance_variable_get('@stream')
+    expect(stream).not_to be_nil
+    message = Aggredator::Api::V1::Message.new({}, {})
+    expect(subject).to receive(:process).with(message)
+    stream << message
+    sleep 0.1
+    subject.close
+    sleep 0.1
+    expect(thread).not_to be_alive
+  end
+
+  context 'process' do
+  
+    it 'success processing' do
+      results = [Aggredator::Dispatcher::Result.new("http://example.com", Aggredator::Api::V1::Message.new({}, {}))]
+      processor = Proc.new do |message|
+        expect(incoming).to eq message
+        results
+      end
+      expect(subject).to receive(:build_processing_stack).and_return(processor)
+      expect(subject).to receive(:send_results).with(incoming, results)
+      subject.send(:process, incoming)
+    end
+
+    it 'reject message' do
+      error = RuntimeError.new SecureRandom.hex
+      expect(subject).to receive(:build_processing_stack).and_raise(error)
+      expect(consumer).to receive(:reject).with(incoming)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming, exception: error)
+      subject.send(:process, incoming)
+    end
+
+  end
+
+  context '#find_processor' do
+  
+    it 'find processor factory' do
+      factory = Aggredator::Factory.new String
+      expect(factory).to receive(:create).and_call_original
+      expect(observer).to receive(:match).and_return([{}, factory])
+      _, processor = subject.send(:find_processor, incoming)
+      expect(processor).to eq String.new
+    end
+
+    it 'find callable processor' do
+      matched, processor = subject.send(:find_processor, incoming)
+      expect(matched).to be_a Hash
+      expect(processor).to respond_to(:call)
+    end
+
+  end
+
+  context '#build_processing_stack' do
+  
+    it 'empty middlewares' do
+      expect(subject.middlewares).to be_empty
+      stack = subject.send(:build_processing_stack)
+      expect(stack).to respond_to(:call)
+      expect(subject).to receive(:process_message).with(incoming)
+      stack.call(incoming)
+    end
+
+    it 'callable middleware' do
+
+      middleware = Class.new(Aggredator::Middleware::Base) do
+
+        MARKER = SecureRandom.uuid
+
+        def self.marker
+          MARKER
+        end
+
+        def call(in_msg)
+          results = app.call(in_msg)
+          results << MARKER
+          results
+        end
+      end
+
+      expect_any_instance_of(middleware).to receive(:call).and_call_original
+      subject.register_middleware middleware
+      stack = subject.send(:build_processing_stack)
+      expect(stack).to respond_to(:call)
+      results = stack.call(incoming)
+      expect(results).not_to be_empty
+      expect(results.last).to eq middleware.marker
+    end
+
+    it 'callable factory' do
+    
+      middleware_factory = Class.new do
+        attr_reader :value, :app, :in_msg
+        def initialize value
+          @value = value
+        end
+
+        def build app
+          @app = app
+          self
+        end
+
+        def call(in_msg)
+          @in_msg = in_msg
+          results = app.call(in_msg)
+          results << @value
+          results
+        end
+
+      end
+
+      marker = SecureRandom.hex
+      factory = middleware_factory.new(marker)
+      subject.register_middleware factory
+      expect(factory).to receive(:build).and_call_original
+      stack = subject.send(:build_processing_stack)
+      expect(stack).to respond_to(:call)
+      results = stack.call incoming
+      expect(results).to be_a Array
+      expect(results.last).to eq marker
+    end
+
+  end
+
+
+  context '#process_message' do
+
+    it 'success processing message' do
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.process', hash_including(msg: incoming))
+      results = subject.send(:process_message, incoming)
+      expect(results).to be_a Array
+    end
+
+    it 'processor have on_error method' do
+      mock_processor = Class.new do
+        attr_reader :message, :e, :marker
+
+        def on_error(message, e)
+          @message = message
+          @e = e
+          @marker = SecureRandom.hex
+          [@marker]
+        end
+      end
+      error = RuntimeError.new SecureRandom.hex
+      processor = mock_processor.new
+      expect(subject).to receive(:find_processor).and_return([{}, processor])
+      expect(ActiveSupport::Notifications).to receive(:instrument).and_raise(error)
+      expect {
+        @results = subject.send(:process_message, incoming)
+      }.not_to raise_error
+      expect(@results).to be_a Array
+      expect(@results).to eq [processor.marker]
+      expect(processor.e).to eq error
+      expect(processor.message).to eq incoming
+    end
+  
+
+    it 'raise error' do
+      error = RuntimeError.new SecureRandom.hex
+      expect(ActiveSupport::Notifications).to receive(:instrument).and_raise(error)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.exception', hash_including(msg: incoming, exception: error))
+      expect{
+        subject.send(:process_message, incoming)
+      }.to raise_error(error)
+    end
+
+  end
+
+  context '#publish_result' do
+
+    it 'not found publisher' do
+      expect {
+        subject.send(:publish_result, result_message)
+      }.to raise_error(/Not found publisher/)
+    end
+
+    it 'success publish' do
+      subject.register_publisher publisher
+      expect {
+        subject.send(:publish_result, result_message)
+      }.not_to raise_error
+    end
+
+  end
+
+  context '#send_results' do
+
+    before(:each) {
+      subject.register_publisher publisher
+    }
+
+    it 'success send results' do
+      results = ([result_message] * 5) << answer_message
+      expect(consumer).to receive(:ack).with(incoming, answer: answer_message)
+      subject.send(:send_results, incoming, results)
+      futures = publisher.futures
+      expect(futures.size).to eq 5
+      futures.each(&:resolve)
+      sleep 0.1
+    end
+
+    it 'failed publishing' do
+      results = [result_message] * 2
+      error = SecureRandom.hex
+      expect(consumer).to receive(:nack).with(incoming)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', hash_including(message: error.inspect))
+      subject.send(:send_results, incoming, results)
+      futures = publisher.futures
+      expect(futures.size).to eq 2
+      futures.first.resolve
+      futures.last.reject error
+      sleep 0.1
+    end
+
+    it 'failed processing rejected message' do
+      error = RuntimeError.new SecureRandom.hex
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', any_args)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', hash_including(msg: incoming, exception: error))
+      expect(subject).to receive(:sleep).with(10)
+      expect(subject).to receive(:exit!).with(1)
+      subject.send(:send_results, incoming, [result_message])
+
+      expect(consumer).to receive(:nack).and_raise(error)
+      future = publisher.futures.first
+      future.reject "test"
+      sleep 0.1
+    end
+
+  end
+
+end
