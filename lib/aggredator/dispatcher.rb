@@ -56,7 +56,7 @@ module Aggredator
       send_results(message, results)
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
-      message.consumer.reject(message)
+      message.consumer.nack(message)
       logger.debug e.backtrace
       logger.error "Exception on processing message with headers = #{message.headers.inspect}"
       logger.error "Exception info: #{e.inspect}"

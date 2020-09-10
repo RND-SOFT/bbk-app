@@ -112,7 +112,7 @@ RSpec.describe Aggredator::Dispatcher do
     it 'reject message' do
       error = RuntimeError.new SecureRandom.hex
       expect(subject).to receive(:build_processing_stack).and_raise(error)
-      expect(consumer).to receive(:reject).with(incoming)
+      expect(consumer).to receive(:nack).with(incoming)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming, exception: error)
       subject.send(:process, incoming)
     end
