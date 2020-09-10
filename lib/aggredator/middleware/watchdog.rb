@@ -23,7 +23,7 @@ module Aggredator
 
       def call(msg)
         touch
-        app.call(msg)
+        @app.call(msg)
       end
 
       def start
