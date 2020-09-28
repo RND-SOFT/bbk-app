@@ -56,7 +56,7 @@ module Aggredator
       send_results(message, results)
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
-      message.consumer.nack(message)
+      message.consumer.nack(message, error: e)
       logger.debug e.backtrace
       logger.error "Exception on processing message with headers = #{message.headers.inspect}"
       logger.error "Exception info: #{e.inspect}"
@@ -107,7 +107,7 @@ module Aggredator
         error = errors.compact.first
         ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: incoming, message: error.inspect
         logger.error "Published result failed: #{error.inspect}"
-        incoming.consumer.nack(incoming)
+        incoming.consumer.nack(incoming, error: error)
       rescue StandardError => e
         STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting..."
         ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: incoming, exception: e
