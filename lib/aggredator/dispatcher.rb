@@ -39,6 +39,7 @@ module Aggredator
       logger.warn("empty consumers list") if consumers.blank?
       consumers.each{|cons| cons.run(@stream)}
       for msg in @stream
+        logger.debug "Consumed message #{msg.headers}"
         @pool.post do
           process msg
         end
@@ -109,7 +110,7 @@ module Aggredator
         logger.error "Published result failed: #{error.inspect}"
         incoming.consumer.nack(incoming, error: error)
       rescue StandardError => e
-        STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting..."
+        STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting: #{e.inspect}"
         ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: incoming, exception: e
         sleep(10)
         exit!(1)
