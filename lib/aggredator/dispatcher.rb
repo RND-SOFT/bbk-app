@@ -1,155 +1,132 @@
 require 'aggredator/dispatcher/message'
 require 'aggredator/dispatcher/result'
 require 'aggredator/dispatcher/route'
-require 'aggredator/dispatcher/transformer'
+require 'aggredator/dispatcher/message_stream'
 require 'aggredator/dispatcher/undeliverable_error'
+require 'concurrent'
 
 module Aggredator
   class Dispatcher
-    attr_accessor :queue, :client, :observer, :before_transformers, :domains, :watchdog, :after_transformers
-    attr_reader :executor
+    attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
-    def initialize(queue, client, observer, domains, watchdog: nil, executor: Aggredator::Executor::Default.new)
-      @queue = queue
-      @client = client
+    POOL_SIZE = 3
+    ANSWER_DOMAIN = 'answer'
+
+    def initialize observer, logger: Logger.new(IO::NULL)
       @observer = observer
-      @before_transformers = []
-      @after_transformers = []
-      @domains = domains
-      @watchdog = watchdog
-
-      self.executor = executor
+      @logger = logger
+      @consumers = []
+      @publishers = []
+      @middlewares = []
     end
 
-    def before(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into #{Transformer.to_s}") unless transformer.is_a? Transformer
-
-      @before_transformers << transformer
+    def register_consumer(consumer)
+      consumers << consumer
     end
 
-    def after(transformer)
-      raise TypeError.new("no implicit conversion of #{transformer.class} into #{Transformer.to_s}") unless transformer.is_a? Transformer
-
-      @after_transformers << transformer
+    def register_publisher(publisher)
+      publishers << publisher
     end
 
-    def run(block: true)
-      @watchdog.start if @watchdog.present?
-      queue.subscribe(block: block, manual_ack: true) do |delivery_info, properties, body|
-        mqmsg = { delivery_info: delivery_info, properties: properties, body: body }
-        ActiveSupport::Notifications.instrument 'dispatcher.request', msg: mqmsg, queue: queue do
-          process_request(mqmsg)
+    def register_middleware(middleware)
+      middlewares << middleware
+    end
+
+    def run
+      @stream = MessageStream.new
+      @pool = Concurrent::FixedThreadPool.new(POOL_SIZE)
+      logger.debug('starting consumers')
+      logger.warn("empty consumers list") if consumers.blank?
+      consumers.each{|cons| cons.run(@stream)}
+      for msg in @stream
+        logger.debug "Consumed message #{msg.headers}"
+        @pool.post do
+          process msg
         end
       end
     end
 
-    def process_request(mqmsg)
-      delivery_info = mqmsg[:delivery_info]
-      properties = mqmsg[:properties]
-      body = mqmsg[:body]
+    def close
+      @stream.close if @stream.present?
+    end
 
-      $logger&.debug "Get message: body = #{body.inspect}, properties = #{properties.inspect}."
+    protected
 
-      msg = transform_incomming(Aggredator::Dispatcher::Message.new(delivery_info, properties, body))
-
-      results = executor.call(msg) do |m|
-        process_incomming_message(mqmsg, m)
-      end
-
-      send_results(mqmsg, msg, results)
+    def process message
+      results = build_processing_stack.call(message).select {|e| e.is_a? Aggredator::Dispatcher::Result}
+      send_results(message, results)
     rescue StandardError => e
-      ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: mqmsg, exception: e
-      client.reject delivery_info.delivery_tag if delivery_info&.delivery_tag
-      $logger&.debug e.backtrace
-      $logger&.error "Exception on processing message with properties = #{properties.inspect}"
-      $logger&.error "Exception info: #{e.inspect}"
+      ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
+      message.consumer.nack(message, error: e)
+      logger.debug e.backtrace
+      logger.error "Exception on processing message with headers = #{message.headers.inspect}"
+      logger.error "Exception info: #{e.inspect}"
     end
 
-    def publish_results(results)
-      Concurrent::Promises.zip_futures(*results.map {|result| publish(result) })
-    end
-
-    def publish(result)
-      route = result.route
-      ex = domains[route.domain]
-
-      unless ex
-        $logger&.error "Can't publish result: no exchange for domain #{route.domain}. message properties = #{result.message.headers.inspect}"
-        raise ArgumentError.new("no exchange for domain #{route.domain}")
-      end
-
-      client.publish(route.routing_key, result.message, exchange: ex, opts: result.properties)
-    end
-
-    def executor=(executor)
-      @executor = executor
-      @executor.dispatcher = self
-    end
-
-    private
-
-      def transform_incomming(msg)
-        before_transformers.reduce(msg) do |m, tr|
-          tr.call(m)
+    def process_message message
+      matched, processor = find_processor(message)
+      results = []
+      begin
+        is_unknown = @observer.instance_variable_get('@default') == processor
+        ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: message, match: matched, unknown: is_unknown do
+          processor.call(message, results: results)
         end
-      end
-
-      def transform_outcoming(res, source_message)
-        after_transformers.reduce(res) do |m, tr|
-          tr.call(m, source_message)
-        end
-      end
-
-      def process_incomming_message(mqmsg, incmsg)
-        matched, processor = find_processor(incmsg)
-
-        results = []
-        begin
-          is_unknown = @observer.instance_variable_get('@default') == processor
-          ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, unknown: is_unknown do
-            watchdog&.touch
-            processor.call(incmsg, results: results)
-          end
-        rescue => e
-          if processor.respond_to?(:on_error)
-            results = processor.on_error(incmsg, e)
-          else
-            raise
-          end
-        end
-
-        # Отфильтровываем результаты по типам, для того чтобы корректно обрабатывать сообщения
-        # неправильного формата или с отсутствием ответов от процессора.
-        [results].flatten.select {|e| e.is_a? Aggredator::Dispatcher::Result }.map {|res| transform_outcoming(res, incmsg) }
       rescue => e
-        ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: mqmsg, match: matched, processor: processor, exception: e
-        raise
-      end
-
-      def find_processor(incmsg)
-        matched, callback = @observer.match(incmsg.properties, incmsg.body, incmsg.delivery_info)
-
-        return [matched, callback.is_a?(Aggredator::Factory) ? callback.create() : callback]
-      end
-
-      def send_results(mqmsg, incmsg, results)
-        results.each do |res_msg|
-          res_msg.properties[:message_id] ||= res_msg.message.headers[:message_id] || incmsg.reply_message_id(res_msg.route)
-        end
-
-        publish_results(results).then do |_successes|
-          client.ack(incmsg.delivery_tag)
-        end.rescue do |*errors|
-          error = errors.compact.first
-          ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: mqmsg, message: error.inspect
-          $logger&.error "Published result failed: #{error.inspect}"
-          client.reject(incmsg.delivery_tag)
-        rescue StandardError => e
-          STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting..."
-          ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: mqmsg, exception: e
-          sleep(10)
-          exit!(1)
+        if processor.respond_to?(:on_error)
+          results = processor.on_error(message, e)
+        else
+          raise
         end
       end
+      [results].flatten
+    rescue => e
+      ActiveSupport::Notifications.instrument 'dispatcher.request.exception', msg: message, match: matched, processor: processor, exception: e
+      raise
+    end
+
+    def find_processor(msg)
+      matched, callback = @observer.match(msg.headers, msg.payload, msg.delivery_info)
+      return [matched, callback.is_a?(Aggredator::Factory) ? callback.create() : callback]
+    end
+
+    def build_processing_stack
+      stack = Proc.new{|msg| process_message(msg)}
+      middlewares.reduce(stack) do |stack, middleware|
+        if middleware.respond_to?(:build)
+          middleware.build(stack)
+        else
+          middleware.new(stack)
+        end
+      end
+    end
+
+    def send_results incoming, results
+      answer = results.find {|msg| msg.route.domain == ANSWER_DOMAIN}
+      Concurrent::Promises.zip_futures(*results.map{|result| publish_result(result)}).then do |_successes|
+        incoming.consumer.ack(incoming, answer: answer)
+      end.rescue do |*errors|
+        error = errors.compact.first
+        ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: incoming, message: error.inspect
+        logger.error "Published result failed: #{error.inspect}"
+        incoming.consumer.nack(incoming, error: error)
+      rescue StandardError => e
+        STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting: #{e.inspect}"
+        ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: incoming, exception: e
+        sleep(10)
+        exit!(1)
+      end
+    end
+
+    # @return [Concurrent::Promises::ResolvableFuture]
+    def publish_result result
+      route = result.route
+      publisher = publishers.find {|pub| pub.protocols.include?(route.scheme)}
+      if publisher.nil?
+        raise "Not found publisher for scheme #{route.scheme}"
+      end
+      # return Concurrent::Promises.resolvable_future
+      publisher.publish(result)
+    end
+
   end
 end

@@ -2,13 +2,13 @@ require 'active_record'
 
 module Aggredator
 
-  module Executor
+  module Middleware
   
-    class ActiveRecordPool < Aggredator::Executor::Base
-      
+    class ActiveRecordPool < Aggredator::Middleware::Base
+
       def call(msg)
         ::ActiveRecord::Base.connection_pool.with_connection do
-          yield(msg)
+          app(msg)
         end
       end
 

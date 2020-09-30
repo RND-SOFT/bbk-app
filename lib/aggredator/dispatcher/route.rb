@@ -12,7 +12,7 @@ module Aggredator
         @domain = uri.user
         @routing_key = "#{uri.host}#{uri.path}"
 
-        raise 'domain must present in route' if @domain.blank?
+        # raise 'domain must present in route' if @domain.blank?
         raise 'routing_key must present in route' if @routing_key.blank?
       end
 

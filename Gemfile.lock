@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    aggredator-app (2.0.1)
+    aggredator-app (2.1.0)
       activesupport
       aggredator-api (~> 2.0)
       aggredator-client (~> 2.0)
