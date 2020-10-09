@@ -13,8 +13,10 @@ module Aggredator
 
       attr_reader :logger
 
-      def initialize(*_args, logger: $logger, **_kwargs)
-        @logger = logger || ::Logger.new(STDOUT)
+      def initialize(*_args, logger: Aggredator::App.logger, **_kwargs)
+        logger = $logger || logger
+        logger = logger.respond_to?(:tagged) ? logger : ActiveSupport::TaggedLogging.new(logger)
+        @logger = Aggredator::App::ProxyLogger.new(logger, tags: self.class.to_s)
       end
 
       def call(message, results: [])
@@ -40,20 +42,10 @@ module Aggredator
         )
       end
 
-      def logger
-        self
-      end
-
-      def debug(msg)
-        @logger.debug "[#{self.class}]: #{msg}"
-      end
-
-      def info(msg)
-        @logger.info "[#{self.class}]: #{msg}"
-      end
-
-      def error(msg)
-        @logger.error "[#{self.class}]: #{msg}"
+      %i[debug info warn error fatal unknown].each do |severity|
+        define_method(severity) do |*args|
+          logger.public_send(severity, *args)
+        end
       end
     end
   end

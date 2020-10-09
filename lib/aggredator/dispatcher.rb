@@ -14,10 +14,10 @@ module Aggredator
     POOL_SIZE = 3
     ANSWER_DOMAIN = 'answer'
 
-    def initialize observer, logger: ::Logger.new(STDOUT)
+    def initialize observer, logger: Aggredator::App.logger
       @observer = observer
-      logger = logger.is_a?(ActiveSupport::TaggedLogging) ? logger : ActiveSupport::TaggedLogging.new(logger)
-      @logger = Aggredator::ProxyLogger.new(logger, tags: 'Dispatcher')
+      logger = logger.respond_to?(:tagged) ? logger : ActiveSupport::TaggedLogging.new(logger)
+      @logger = Aggredator::App::ProxyLogger.new(logger, tags: 'Dispatcher')
       @consumers = []
       @publishers = []
       @middlewares = []

@@ -43,7 +43,7 @@ module Aggredator
         end
 
         if @actions.key?(action.to_s)
-          $logger&.warn("Action with same name already registered: #{action}. Args: #{args.inspect}. Backtrace: #{caller.first(15).inspect}")
+          warn("Action with same name already registered: #{action}. Args: #{args.inspect}. Backtrace: #{caller.first(15).inspect}")
         end
   
         @actions[action.to_s] = callable
@@ -51,7 +51,7 @@ module Aggredator
   
       def process(message, results: [])
         current_action = (message.headers[:action] || 'default').to_s
-        $logger&.debug "ActionRequest[#{current_action.inspect}] request: #{message.properties.inspect}."
+        debug "ActionRequest[#{current_action.inspect}] request: #{message.properties.inspect}."
         handler = @actions[current_action]
   
         if handler.present?
@@ -68,8 +68,8 @@ module Aggredator
   
         results
       rescue StandardError => e
-        $logger&.error "Exception: #{e.inspect}"
-        $logger&.error e.backtrace.join("\n")
+        error "Exception: #{e.inspect}"
+        error e.backtrace.join("\n")
         ActiveSupport::Notifications.instrument 'action_processor.exception', action: current_action, headers: message.headers, exception: e, processor: handler
         results.clear
         results << Aggredator::Dispatcher::Result.new(

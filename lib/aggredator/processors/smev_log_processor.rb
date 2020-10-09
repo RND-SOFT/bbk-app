@@ -25,7 +25,7 @@ module Aggredator
       end
 
       def process(message, results: [])
-        $logger&.info "Exchange log message: #{message.properties.inspect}"
+        info "Exchange log message: #{message.properties.inspect}"
 
         if (_ticket = model_class.find_by_ticket_id(message.headers[:ticket]))
           results << Aggredator::Dispatcher::Result.new(
@@ -44,7 +44,7 @@ module Aggredator
       end
 
       def make_error_answer(message, properties, meta)
-        $logger&.error "Build error message: #{message}. Properties: #{properties.inspect}"
+        error "Build error message: #{message}. Properties: #{properties.inspect}"
         Aggredator::Api::V1::Responses::ExchangeLogResponse.new(
           {
             correlation_id: properties[:message_id] || properties.dig(:headers, :message_id),

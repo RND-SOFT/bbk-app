@@ -1,6 +1,8 @@
 RSpec.describe Aggredator::Processors::ActionProcessor do
-
-  subject { described_class.new }
+  let(:io) { StringIO.new }
+  let(:output) { io.string }
+  let(:logger) { ::Logger.new(io) }
+  subject { described_class.new logger: logger }
 
   it 'check rule' do
     rule = described_class.rule
@@ -11,9 +13,8 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
   end
 
   context 'register' do
-
-    let(:args) { (2 + Random.rand(5)).times.map { SecureRandom.hex } }
-    let(:proc_obj) { Proc.new {} }
+    let(:args) { Random.rand(2..6).times.map { SecureRandom.hex } }
+    let(:proc_obj) { proc {} }
     let(:action) { SecureRandom.hex }
     let(:processor) { Aggredator::Processors::PingProcessor }
 
@@ -29,7 +30,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     end
 
     it 'register processor with block param' do
-      subject.register processor,  *args, &proc_obj
+      subject.register processor, *args, &proc_obj
       actions = subject.instance_variable_get('@actions')
       callable = actions.values.first
       expect(callable.instanceargs).to eq args + [proc_obj]
@@ -50,7 +51,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     end
 
     it 'invalid action name or not exist action method' do
-      expect{ subject.register nil, processor}.to raise_error(RuntimeError, /action name or method/)
+      expect { subject.register nil, processor }.to raise_error(RuntimeError, /action name or method/)
     end
 
     it 'register block' do
@@ -64,27 +65,19 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     end
 
     it 'double action registration' do
-      old = $logger
-      begin
-        $logger = double(:warn)
+      subject.register action, proc_obj
+      expect do
         subject.register action, proc_obj
-        expect($logger).to receive(:warn).with(/Action with same name already registered/)
-        expect {
-          subject.register action, proc_obj
-        }.not_to raise_error
-      ensure
-        $logger = old
-      end
+      end.not_to raise_error
+      expect(output).to match(/Action with same name already registered/)
     end
-
-
   end
 
   context 'process message' do
     let(:delivery_info) { OpenStruct.new }
     let(:body) { JSON.generate({}) }
     let(:processor_cls) { Aggredator::Processors::PingProcessor }
-    let(:properties) {
+    let(:properties) do
       properties = Aggredator::Api::V1::Ping.meta_match_rule
       properties[:headers].merge!(
         message_id: SecureRandom.uuid,
@@ -94,20 +87,20 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
         type: Aggredator::Api::V1::ActionRequest.type
       )
       properties
-    }
+    end
 
-    let(:message) {
-      Aggredator::Dispatcher::Message.new delivery_info, properties, body 
-    }
+    let(:message) do
+      Aggredator::Dispatcher::Message.new delivery_info, properties, body
+    end
 
-    before(:each) do 
+    before(:each) do
       subject.register processor_cls
       @handler = subject.instance_variable_get('@actions').values.first
     end
 
     it 'call processor' do
       results = []
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action', action: processor_cls.action, headers: message.headers ).and_call_original
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action', action: processor_cls.action, headers: message.headers).and_call_original
       expect(@handler).to receive(:call).with(message, results: results)
       subject.process message, results: results
     end
@@ -129,7 +122,7 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
 
     it 'catch error' do
       subject.instance_variable_set('@actions', nil)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.exception', hash_including(action: message.headers[:action], headers: message.headers) )
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.exception', hash_including(action: message.headers[:action], headers: message.headers))
       results = []
       subject.process message, results: results
       expect(results).not_to be_empty
@@ -138,7 +131,5 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       expect(msg.route.uri.to_s).to eq "mq://outer@#{message.reply_to}"
       expect(msg.message).to be_a Aggredator::Api::V1::Error
     end
-
   end
-
 end
