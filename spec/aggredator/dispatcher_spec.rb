@@ -60,7 +60,6 @@ RSpec.describe Aggredator::Dispatcher do
   it 'ctor' do
     instance = described_class.new observer
     expect(instance.observer).to eq observer
-    expect(instance.logger).to be_a Logger
     expect(instance.publishers).to be_empty
     expect(instance.consumers).to be_empty
     expect(instance.middlewares).to be_empty

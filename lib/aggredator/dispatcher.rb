@@ -1,3 +1,5 @@
+require 'aggredator/utils/proxy_logger'
+
 require 'aggredator/dispatcher/message'
 require 'aggredator/dispatcher/result'
 require 'aggredator/dispatcher/route'
@@ -12,9 +14,10 @@ module Aggredator
     POOL_SIZE = 3
     ANSWER_DOMAIN = 'answer'
 
-    def initialize observer, logger: Logger.new(IO::NULL)
+    def initialize observer, logger: ::Logger.new(STDOUT)
       @observer = observer
-      @logger = logger
+      logger = logger.is_a?(ActiveSupport::TaggedLogging) ? logger : ActiveSupport::TaggedLogging.new(logger)
+      @logger = Aggredator::ProxyLogger.new(logger, tags: 'Dispatcher')
       @consumers = []
       @publishers = []
       @middlewares = []
@@ -36,12 +39,15 @@ module Aggredator
       @stream = MessageStream.new
       @pool = Concurrent::FixedThreadPool.new(POOL_SIZE)
       logger.debug('starting consumers')
-      logger.warn("empty consumers list") if consumers.blank?
+      logger.warn("consumers list empty!") if consumers.blank?
+
       consumers.each{|cons| cons.run(@stream)}
       for msg in @stream
         logger.debug "Consumed message #{msg.headers}"
         @pool.post do
-          process msg
+          logger.tagged(msg.headers[:message_id]) do
+            process msg
+          end
         end
       end
     end
@@ -54,6 +60,7 @@ module Aggredator
 
     def process message
       results = build_processing_stack.call(message).select {|e| e.is_a? Aggredator::Dispatcher::Result}
+      logger.debug "There are #{results.count} results to send..."
       send_results(message, results)
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
@@ -101,13 +108,15 @@ module Aggredator
     end
 
     def send_results incoming, results
+      message_id = incoming.headers[:message_id]
+
       answer = results.find {|msg| msg.route.domain == ANSWER_DOMAIN}
       Concurrent::Promises.zip_futures(*results.map{|result| publish_result(result)}).then do |_successes|
         incoming.consumer.ack(incoming, answer: answer)
       end.rescue do |*errors|
         error = errors.compact.first
         ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: incoming, message: error.inspect
-        logger.error "Published result failed: #{error.inspect}"
+        logger.error "[Message#{message_id}] Publish failed: #{error.inspect}"
         incoming.consumer.nack(incoming, error: error)
       rescue StandardError => e
         STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting: #{e.inspect}"
@@ -120,6 +129,7 @@ module Aggredator
     # @return [Concurrent::Promises::ResolvableFuture]
     def publish_result result
       route = result.route
+      logger.debug "Publish result to #{route} ..."
       publisher = publishers.find {|pub| pub.protocols.include?(route.scheme)}
       if publisher.nil?
         raise "Not found publisher for scheme #{route.scheme}"
