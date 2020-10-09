@@ -9,11 +9,11 @@ module Aggredator
   class Dispatcher
     attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
-    POOL_SIZE = 3
     ANSWER_DOMAIN = 'answer'
 
-    def initialize observer, logger: Aggredator::App.logger
+    def initialize observer, pool_size: 3, logger: Aggredator::App.logger
       @observer = observer
+      @pool_size = pool_size
       logger = logger.respond_to?(:tagged) ? logger : ActiveSupport::TaggedLogging.new(logger)
       @logger = Aggredator::App::ProxyLogger.new(logger, tags: 'Dispatcher')
       @consumers = []
@@ -35,16 +35,16 @@ module Aggredator
 
     def run
       @stream = MessageStream.new
-      @pool = Concurrent::FixedThreadPool.new(POOL_SIZE)
+      @pool = Concurrent::FixedThreadPool.new(@pool_size)
       logger.debug('starting consumers')
       logger.warn("consumers list empty!") if consumers.blank?
 
       consumers.each{|cons| cons.run(@stream)}
       for msg in @stream
         logger.debug "Consumed message #{msg.headers}"
-        @pool.post do
-          logger.tagged(msg.headers[:message_id]) do
-            process msg
+        @pool.post(msg) do |m|
+          logger.tagged(m.headers[:message_id]) do
+            process m
           end
         end
       end
@@ -58,7 +58,7 @@ module Aggredator
 
     def process message
       results = build_processing_stack.call(message).select {|e| e.is_a? Aggredator::Dispatcher::Result}
-      logger.debug "There are #{results.count} results to send..."
+      logger.debug "There are #{results.count} results to send from #{message[:message_id]}..."
       send_results(message, results)
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
