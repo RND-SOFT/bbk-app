@@ -1,5 +1,3 @@
-require 'aggredator/utils/proxy_logger'
-
 require 'aggredator/dispatcher/message'
 require 'aggredator/dispatcher/result'
 require 'aggredator/dispatcher/route'
