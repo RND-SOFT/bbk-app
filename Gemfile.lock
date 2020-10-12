@@ -5,6 +5,7 @@ PATH
       activesupport
       aggredator-api (~> 2.0)
       aggredator-client (~> 2.0)
+      timeouter
 
 GEM
   remote: https://rubygems.org/
@@ -129,6 +130,7 @@ GEM
     terminal-table (1.8.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
     thread_safe (0.3.6)
+    timeouter (0.1.2.16873)
     tty-which (0.4.2)
     tzinfo (1.2.7)
       thread_safe (~> 0.1)
