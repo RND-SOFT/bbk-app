@@ -18,7 +18,8 @@ require 'bundler'
 require "bundler/setup"
 Bundler.require(:default, :development, :test)
 
-Aggredator::App.logger = ::Logger.new(IO::NULL)
+Aggredator::App.logger = ::Logger.new(STDOUT)
+Aggredator::App.logger.level = :fatal
 
 $root = File.join(File.dirname(__dir__), 'spec')
 Dir[File.join(__dir__, 'support', '**', '*.rb')].sort.each { |f| require f}

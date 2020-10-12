@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'activesupport'
+  spec.add_runtime_dependency 'timeouter'
   
   spec.add_runtime_dependency 'aggredator-api', '~> 2.0'
   spec.add_runtime_dependency 'aggredator-client', '~> 2.0'

@@ -1,0 +1,100 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require 'benchmark'
+require 'securerandom'
+require "aggredator/app"
+require 'net/http'
+
+Thread.abort_on_exception = true
+Aggredator::App.logger.level = :info
+
+$str = SecureRandom.hex * 10
+
+def cpu
+  100.times do
+    $str[SecureRandom.hex]
+  end
+end
+
+def io
+  #Net::HTTP.get_response(URI('http://y12313a.r1231231u')) rescue nil
+  sleep 0.1
+end
+
+class Consumer
+  attr_reader :count, :acks, :nacks
+  def initialize count
+    @count = count
+    @acks = 0
+    @nacks = 0
+  end
+
+  def on_finish &block
+    @on_finish = block
+  end
+
+  def on_ack &block
+    @on_ack = block
+  end
+
+  def run(stream)
+    Thread.new(stream) do |s|
+      result = @count.times do |i|
+        s << OpenStruct.new(consumer: self, headers: {}, payload: i)
+      end
+      @on_finish.call(result)
+    end
+  end
+
+  def ack(incoming, answer: nil)
+    @acks += 1
+    @on_ack.call(incoming)
+  end
+
+  def nack(incoming, error: nil)
+    @nacks += 1
+  end
+end
+
+
+
+def run(count, pool: 0, operation: :cpu, stream_type:, pool_type:)
+  dispatcher = Aggredator::Dispatcher.new(Aggredator::Handler.new, pool_size: pool, stream_type: stream_type, pool_type: pool_type)
+  c = Consumer.new(count).tap do |c|
+    c.on_finish do
+      dispatcher.close(3)
+    end
+    c.on_ack do
+      send(operation)
+    end
+    dispatcher.register_consumer(c)
+  end
+  dispatcher.run()
+  raise "Somethong wrong" if c.acks != count
+  #puts "ack:#{c.acks}"
+end
+
+CPU_COUNT = 100000
+IO_COUNT = 200
+
+
+[Aggredator::Dispatcher::SIMPLE_POOL, Aggredator::Dispatcher::CONCURRENT_POOL].each do |pool_type|
+  puts "\n == Benchmark Dispatcher with pool_type: #{pool_type}"
+  [Aggredator::Dispatcher::QUEUE_STREAM, Aggredator::Dispatcher::POOL_STREAM].each do |stream_type|
+    puts "\n   ** Benchmark Dispatcher with stream_type: #{stream_type}"
+
+    Benchmark.bm(30) do |x|
+      x.report("CPU with #{pool_type} pool[#{stream_type}] 1") { run(CPU_COUNT, pool: 1, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
+      x.report("CPU with #{pool_type} pool[#{stream_type}] 3") { run(CPU_COUNT, pool: 3, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
+      x.report("CPU with #{pool_type} pool[#{stream_type}] 5") { run(CPU_COUNT, pool: 5, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
+    end
+
+
+    Benchmark.bm(30) do |x|
+      x.report("IO with #{pool_type} pool[#{stream_type}] 1") { run(IO_COUNT, pool: 1, operation: :io, stream_type: stream_type, pool_type: pool_type) }
+      x.report("IO with #{pool_type} pool[#{stream_type}] 3") { run(IO_COUNT, pool: 3, operation: :io, stream_type: stream_type, pool_type: pool_type) }
+      x.report("IO with #{pool_type} pool[#{stream_type}] 5") { run(IO_COUNT, pool: 5, operation: :io, stream_type: stream_type, pool_type: pool_type) }
+    end
+  end
+end

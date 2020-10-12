@@ -31,7 +31,7 @@ RSpec.describe Aggredator::Dispatcher do
       @acked << {incoming: incoming, answer: answer}
     end
 
-    def nack incoming
+    def nack incoming, error: nil
       @nacked << incoming
     end
 
@@ -104,12 +104,12 @@ RSpec.describe Aggredator::Dispatcher do
         results
       end
       expect(subject).to receive(:build_processing_stack).and_return(processor)
-      expect(subject).to receive(:send_results).with(incoming, results)
+      expect(subject).to receive(:send_results).with(incoming, results).and_return(double(value: true))
       subject.send(:process, incoming)
     end
 
     it 'reject message' do
-      error = RuntimeError.new SecureRandom.hex
+      error = RuntimeError.new "Expected Test Error: #{SecureRandom.hex}"
       expect(subject).to receive(:build_processing_stack).and_raise(error)
       expect(consumer).to receive(:nack).with(incoming, error: error)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming, exception: error)
