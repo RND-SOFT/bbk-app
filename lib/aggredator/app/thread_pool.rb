@@ -12,21 +12,23 @@ module Aggredator
 
         @threads = size.times.map do
           Thread.new(@jobs) do |jobs|
-            Thread.current.report_on_exception = true
-            Thread.current.abort_on_exception = true
+            begin
+              Thread.current.report_on_exception = true
+              Thread.current.abort_on_exception = true
 
-            unless @shutdown
-              until @term
-                job, args = jobs.pop
-                break if  @term || job == :exit
+              unless @shutdown
+                until @term
+                  job, args = jobs.pop
+                  break if  @term || job == :exit
 
-                job.call(*args)
+                  job.call(*args)
+                end
               end
+            rescue StandardError => e
+              warn "[CRITICAL]: ThreadPool exception: #{e}"
+              warn "[CRITICAL]: #{e.backtrace.join("\n")}"
+              exit(1)
             end
-          rescue => e
-            STDERR.puts "[CRITICAL]: ThreadPool exception: #{e}"
-            STDERR.puts "[CRITICAL]: #{e.backtrace.join("\n")}"
-            exit(1)
           end
         end
       end

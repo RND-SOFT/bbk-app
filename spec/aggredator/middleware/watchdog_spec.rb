@@ -20,7 +20,7 @@ RSpec.describe Aggredator::Middleware::Watchdog do
     def publish(result)
       # emulate publish message
       message = OpenStruct.new consumer: @consumer, headers: result.message.headers, payload: {}
-      msg_stream << message unless msg_stream.nil?
+      msg_stream.push(message) unless msg_stream.nil?
     end
   end
 
@@ -33,8 +33,8 @@ RSpec.describe Aggredator::Middleware::Watchdog do
       dispatcher.run
     end
     sleep 0.1
-    stream = dispatcher.instance_variable_get('@stream')
-    publisher.msg_stream = stream
+    stream_strategy = dispatcher.instance_variable_get('@stream_strategy')
+    publisher.msg_stream = stream_strategy
     sleep 1
     subject.start
     sleep 0.1

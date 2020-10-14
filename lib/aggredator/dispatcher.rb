@@ -5,9 +5,24 @@ require 'aggredator/dispatcher/route'
 require 'aggredator/dispatcher/message_stream'
 require 'aggredator/dispatcher/pool_proxy_stream'
 require 'aggredator/dispatcher/undeliverable_error'
+require 'aggredator/dispatcher/queue_stream_strategy'
+require 'aggredator/dispatcher/direct_stream_strategy'
 require 'concurrent'
 
 module Aggredator
+
+  class SimplePoolFactory
+    def self.call(pool_size, queue_size)
+      Aggredator::App::ThreadPool.new(pool_size, queue: queue_size)
+    end
+  end
+
+  class ConcurrentPoolFactory
+    def self.call(pool_size, queue_size)
+      Concurrent::FixedThreadPool.new(pool_size, max_queue: queue_size, fallback_policy: :caller_runs)
+    end
+  end 
+
   class Dispatcher
     attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
@@ -18,7 +33,7 @@ module Aggredator
     SIMPLE_POOL = :simple
     CONCURRENT_POOL = :concurrent
 
-    def initialize observer, pool_size: 3, logger: Aggredator::App.logger, stream_type: QUEUE_STREAM, pool_type: SIMPLE_POOL
+    def initialize observer, pool_size: 3, logger: Aggredator::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy
       @observer = observer
       @pool_size = pool_size
       logger = logger.respond_to?(:tagged) ? logger : ActiveSupport::TaggedLogging.new(logger)
@@ -26,8 +41,8 @@ module Aggredator
       @consumers = []
       @publishers = []
       @middlewares = []
-      @stream_type = stream_type
-      @pool_type = pool_type
+      @pool_factory = pool_factory
+      @stream_strategy_class = stream_strategy
     end
 
     def register_consumer(consumer)
@@ -44,82 +59,19 @@ module Aggredator
 
     # Run all consumers and blocks on message processing
     def run
-      if @pool_type == SIMPLE_POOL
-        @pool = Aggredator::App::ThreadPool.new(@pool_size, queue: 20)
-      elsif @pool_type == CONCURRENT_POOL
-        @pool = Concurrent::FixedThreadPool.new(@pool_size, max_queue: 20, fallback_policy: :caller_runs)
-      else
-        raise "invalia dispetcher pool_type: #{@pool_type.inspect}"
-      end
+      @pool = @pool_factory.call(@pool_size, 10)
+      @stream_strategy = @stream_strategy_class.new(@pool, logger: logger)
 
-      if @stream_type == QUEUE_STREAM
-        run_queue_streaming
-      elsif @stream_type == POOL_STREAM
-        run_pool_streaming
-      else
-        raise "invalia dispetcher stream_type: #{@stream_type.inspect}"
-      end
-    end
-
-    # Store all consumed messages in queue and process it in Thread Pool
-    def run_queue_streaming
-      @stream = MessageStream.new(size: 20)
-      @stop_queue_unblocker = Queue.new
-
-      consumers.each{|cons| cons.run(@stream)}
-      for msg in @stream
-        logger.debug "Consumed message #{msg.headers}"
-        @pool.post(msg) do |m|
-          begin
-            logger.tagged(m.headers[:message_id]) do
-              process m
-            end
-          rescue => e
-            logger.fatal "E1: #{e}"
-            logger.fatal "E1: #{e.backtrace.join("\n")}"
+      @stream_strategy.run(consumers) do |msg|
+        begin
+          logger.tagged(msg.headers[:message_id]) do
+            process msg
           end
+        rescue => e
+          logger.fatal "E[#{@stream_strategy_class}]: #{e}"
+          logger.fatal "E[#{@stream_strategy_class}]: #{e.backtrace.join("\n")}"
         end
       end
-
-      @pool.shutdown rescue nil
-      @pool.kill unless @pool.wait_for_termination(@stop_queue_timeout)
-    ensure
-      @stop_queue_unblocker.push(:ok)
-    end
-
-    def stop_queue_streaming timeout
-      @stop_queue_timeout = timeout
-
-      @stream.close rescue nil
-      @stop_queue_unblocker.pop
-    end
-
-
-    # Process consumed message immidiatle after receivingб without intermediate queue
-    def run_pool_streaming
-      @stream = PoolProxyStream.new do |msg|
-        logger.debug "Consumed message from proxy #{msg.headers}"
-        @pool.post(msg) do |m|
-          begin
-            logger.tagged(m.headers[:message_id]) do
-              process m
-            end
-          rescue => e
-            logger.fatal "E2: #{e}"
-            logger.fatal "E2: #{e.backtrace.join("\n")}"
-          end
-        end
-      end
-
-      consumers.each{|cons| cons.run(@stream)}
-      @pool.wait_for_termination
-    end
-
-    def stop_pool_streaming timeout
-      @stream.close rescue nil
-
-      @pool.shutdown rescue nil
-      @pool.kill unless @pool.wait_for_termination(timeout)
     end
 
     # stop dispatcher and wait for termination
@@ -132,19 +84,13 @@ module Aggredator
     def close timeout = 5
       consumers.each do |cons|
         begin
-          cons.close
+          cons.stop
         rescue => e
           logger.error "Consumer #{cons} stop error: #{e}"
         end
       end
 
-      if @stream_type == QUEUE_STREAM
-        stop_queue_streaming(timeout)
-      elsif @stream_type == POOL_STREAM
-        stop_pool_streaming(timeout)
-      else
-        raise "invalia dispetcher stream_type: #{@stream_type.inspect}"
-      end
+      @stream_strategy.stop(5)
 
       consumers.each do |cons|
         begin

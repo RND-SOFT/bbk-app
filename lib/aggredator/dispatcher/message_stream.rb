@@ -4,9 +4,9 @@ module Aggredator
   class Dispatcher
     class MessageStream
       CLOSE_VALUE = :close
-      attr_reader :queue
+      attr_reader :queue, :stream
 
-      def initialize size: 10
+      def initialize(size: 10)
         @queue = SizedQueue.new(size)
         @closed = false
       end
@@ -16,22 +16,23 @@ module Aggredator
       end
       alias << push
 
-      def each *args, &block
-        Enumerator.new do |y|
-          loop do
-            value = @queue.pop
-            break if value == CLOSE_VALUE
+      def each
+        return to_enum unless block_given?
+        return nil if @closed
 
-            y << value
-          end unless @closed
-        end.each(*args, &block)
+        loop do
+          value = @queue.pop
+          break if value == CLOSE_VALUE
+
+          yield(value)
+        end
       end
 
       def close
         @closed = true
         @queue << CLOSE_VALUE
       end
-
+      
     end
   end
 end
