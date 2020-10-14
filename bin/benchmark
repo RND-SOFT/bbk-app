@@ -47,6 +47,12 @@ class Consumer
     end
   end
 
+  def close 
+  end
+
+  def stop *args
+  end
+
   def ack(incoming, answer: nil)
     @acks += 1
     @on_ack.call(incoming)
@@ -59,11 +65,11 @@ end
 
 
 
-def run(count, pool: 0, operation: :cpu, stream_type:, pool_type:)
-  dispatcher = Aggredator::Dispatcher.new(Aggredator::Handler.new, pool_size: pool, stream_type: stream_type, pool_type: pool_type)
+def run(count, pool: 0, operation: :cpu, pool_factory:, stream_strategy:)
+  dispatcher = Aggredator::Dispatcher.new(Aggredator::Handler.new, pool_size: pool, pool_factory: pool_factory, stream_strategy: stream_strategy)
   c = Consumer.new(count).tap do |c|
     c.on_finish do
-      dispatcher.close(3)
+      dispatcher.close(21)
     end
     c.on_ack do
       send(operation)
@@ -79,22 +85,21 @@ CPU_COUNT = 100000
 IO_COUNT = 200
 
 
-[Aggredator::Dispatcher::SIMPLE_POOL, Aggredator::Dispatcher::CONCURRENT_POOL].each do |pool_type|
-  puts "\n == Benchmark Dispatcher with pool_type: #{pool_type}"
-  [Aggredator::Dispatcher::QUEUE_STREAM, Aggredator::Dispatcher::POOL_STREAM].each do |stream_type|
-    puts "\n   ** Benchmark Dispatcher with stream_type: #{stream_type}"
+[Aggredator::SimplePoolFactory, Aggredator::ConcurrentPoolFactory].each do |pool_factory|
+  puts "\n == Benchmark Dispatcher with pool_factory: #{pool_factory}"
+  [Aggredator::Dispatcher::QueueStreamStrategy, Aggredator::Dispatcher::DirectStreamStrategy].each do |stream_strategy|
+    puts "\n   ** Benchmark Dispatcher with stream_strategy: #{stream_strategy}"
 
-    Benchmark.bm(30) do |x|
-      x.report("CPU with #{pool_type} pool[#{stream_type}] 1") { run(CPU_COUNT, pool: 1, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
-      x.report("CPU with #{pool_type} pool[#{stream_type}] 3") { run(CPU_COUNT, pool: 3, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
-      x.report("CPU with #{pool_type} pool[#{stream_type}] 5") { run(CPU_COUNT, pool: 5, operation: :cpu, stream_type: stream_type, pool_type: pool_type) }
+    Benchmark.bm(55) do |x|
+      x.report("CPU with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 1") { run(CPU_COUNT, pool: 1, operation: :cpu, pool_factory: pool_factory, stream_strategy: stream_strategy) }
+      x.report("CPU with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 3") { run(CPU_COUNT, pool: 3, operation: :cpu, pool_factory: pool_factory, stream_strategy: stream_strategy) }
+      x.report("CPU with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 5") { run(CPU_COUNT, pool: 5, operation: :cpu, pool_factory: pool_factory, stream_strategy: stream_strategy) }
     end
 
-
-    Benchmark.bm(30) do |x|
-      x.report("IO with #{pool_type} pool[#{stream_type}] 1") { run(IO_COUNT, pool: 1, operation: :io, stream_type: stream_type, pool_type: pool_type) }
-      x.report("IO with #{pool_type} pool[#{stream_type}] 3") { run(IO_COUNT, pool: 3, operation: :io, stream_type: stream_type, pool_type: pool_type) }
-      x.report("IO with #{pool_type} pool[#{stream_type}] 5") { run(IO_COUNT, pool: 5, operation: :io, stream_type: stream_type, pool_type: pool_type) }
+    Benchmark.bm(55) do |x|
+      x.report("IO with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 1") { run(IO_COUNT, pool: 1, operation: :io, pool_factory: pool_factory, stream_strategy: stream_strategy) }
+      x.report("IO with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 3") { run(IO_COUNT, pool: 3, operation: :io, pool_factory: pool_factory, stream_strategy: stream_strategy) }
+      x.report("IO with #{stream_strategy.to_s.demodulize} pool[#{pool_factory.to_s.demodulize}] 5") { run(IO_COUNT, pool: 5, operation: :io, pool_factory: pool_factory, stream_strategy: stream_strategy) }
     end
   end
 end

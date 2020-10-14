@@ -79,16 +79,16 @@ RSpec.describe Aggredator::Dispatcher do
   end
 
   it 'process message' do
-    expect(subject.instance_variable_get('@stream')).to be_nil
+    expect(subject.instance_variable_get('@stream_strategy')).to be_nil
     thread = Thread.new do
       subject.run
     end
     sleep 0.1
-    stream = subject.instance_variable_get('@stream')
-    expect(stream).not_to be_nil
+    stream_strategy = subject.instance_variable_get('@stream_strategy')
+    expect(stream_strategy).not_to be_nil
     message = Aggredator::Api::V1::Message.new({}, {})
     expect(subject).to receive(:process).with(message)
-    stream << message
+    stream_strategy.push(message)
     sleep 0.1
     subject.close
     sleep 0.1
