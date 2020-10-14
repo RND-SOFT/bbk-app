@@ -113,7 +113,7 @@ module Aggredator
 
     def process message
       results = build_processing_stack.call(message).select {|e| e.is_a? Aggredator::Dispatcher::Result}
-      logger.debug "There are #{results.count} results to send from #{message[:message_id]}..."
+      logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
       send_results(message, results).value
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
