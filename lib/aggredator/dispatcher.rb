@@ -87,6 +87,7 @@ module Aggredator
           cons.stop
         rescue => e
           logger.error "Consumer #{cons} stop error: #{e}"
+          logger.debug e.backtrace
         end
       end
 
@@ -97,6 +98,7 @@ module Aggredator
           cons.close
         rescue => e
           logger.error "Consumer #{cons} close error: #{e}"
+          logger.debug e.backtrace
         end
       end
 
@@ -105,6 +107,7 @@ module Aggredator
           pub.close
         rescue => e
           logger.error "Publisher #{pub} close error: #{e}"
+          logger.debug e.backtrace
         end
       end
     end
