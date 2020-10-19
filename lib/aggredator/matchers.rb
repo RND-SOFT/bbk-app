@@ -1,14 +1,16 @@
 module Aggredator
-
   class Matchers
-
     def self.create(type, *args)
       case type
       when :meta
-        MetadataMatcher.new(args.first)
+        HeadersMatcher.new(args.first)
+      when :headers
+        HeadersMatcher.new(args.first)
       when :payload
         PayloadMatcher.new(args.first)
       when :delivery
+        DeliveryInfoMatcher.new(args.first)
+      when :delivery_info
         DeliveryInfoMatcher.new(args.first)
       when :full
         FullMatcher.new(*args)
@@ -16,21 +18,19 @@ module Aggredator
         raise "there is no such matcher: #{type}"
       end
     end
-
   end
 
   class BaseMatcher
-
     attr_reader :rule
 
     def hash
-      (self.class.to_s + self.rule.to_s).hash
+      (self.class.to_s + rule.to_s).hash
     end
 
     def ==(other)
-      return self.class == other.class && self.rule == other.rule
+      self.class == other.class && rule == other.rule
     end
-    
+
     def eql?(other)
       self == other
     end
@@ -59,45 +59,39 @@ module Aggredator
 
       keys_deep(result).count == keys_deep(rule).count ? result : nil
     end
-
   end
 
-  class MetadataMatcher < BaseMatcher
-
+  class HeadersMatcher < BaseMatcher
     def initialize(rule)
       @rule = rule.with_indifferent_access
     end
 
-    def match(metadata, _payload, *_args)
-      match_impl(@rule, metadata.with_indifferent_access)
-    rescue StandardError => e
+    def match(headers, _payload = nil, _delivery_info = nil, *_args)
+      match_impl(@rule, headers.with_indifferent_access)
+    rescue StandardError
       nil
     end
-
   end
 
   class PayloadMatcher < BaseMatcher
-
     def initialize(rule)
       @rule = rule.with_indifferent_access
     end
 
-    def match(_metadata, payload, *_args)
+    def match(_headers, payload, _delivery_info = nil, *_args)
       payload = JSON(payload) if payload&.is_a?(String)
       match_impl(@rule, payload.with_indifferent_access)
-    rescue StandardError => e
+    rescue StandardError
       nil
     end
-
   end
 
   class DeliveryInfoMatcher < BaseMatcher
-
     def initialize(rule)
       @rule = rule.with_indifferent_access
     end
 
-    def match(_metadata, _payload, delivery_info)
+    def match(_headers, _payload, delivery_info, *_args)
       delivery_info = delivery_info.to_hash unless delivery_info.is_a? Hash
       match_impl(@rule, delivery_info.with_indifferent_access)
     rescue StandardError
@@ -109,35 +103,28 @@ module Aggredator
       if !result && (key_rule = rule[:routing_key])
         regexp_rule = Regexp.new("\\A#{key_rule.gsub('.', '\.').gsub('*', '\S+').gsub('#', '.*')}\\Z")
         check = regexp_rule.match?(data[:routing_key])
-        result = if check
-          {'routing_key' => data[:routing_key]}
-        end
+        result = ({ 'routing_key' => data[:routing_key] } if check)
       end
       result
     end
-
   end
 
   class FullMatcher < BaseMatcher
-
-    def initialize(mrule, prule, drule)
-      @mm = Aggredator::MetadataMatcher.new(mrule)
+    def initialize(hrule, prule, drule)
+      @hm = Aggredator::HeadersMatcher.new(hrule)
       @pm = Aggredator::PayloadMatcher.new(prule)
       @dm = Aggredator::DeliveryInfoMatcher.new(drule)
-      @rule = [mrule, prule, drule]
+      @rule = [hrule, prule, drule]
     end
 
-    def match(metadata, payload, delivery_info)
-      return unless (mr = @mm.match(metadata, payload, delivery_info))
-      return unless (pr = @pm.match(metadata, payload, delivery_info))
-      return unless (dr = @dm.match(metadata, payload, delivery_info))
+    def match(headers, payload, delivery_info, *_args)
+      return unless (hr = @hm.match(headers, payload, delivery_info))
+      return unless (pr = @pm.match(headers, payload, delivery_info))
+      return unless (dr = @dm.match(headers, payload, delivery_info))
 
-      [mr, pr, dr]
-    rescue StandardError => e
+      [hr, pr, dr]
+    rescue StandardError
       nil
     end
-
   end
-
 end
-

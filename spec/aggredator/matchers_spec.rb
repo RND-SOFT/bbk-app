@@ -15,7 +15,8 @@ RSpec.describe Aggredator::Matchers do
   context 'matchers create' do
   
     types = {
-      meta: Aggredator::MetadataMatcher,
+      meta: Aggredator::HeadersMatcher,
+      headers: Aggredator::HeadersMatcher,
       payload: Aggredator::PayloadMatcher,
       delivery: Aggredator::DeliveryInfoMatcher,
       full: Aggredator::FullMatcher
@@ -36,7 +37,7 @@ RSpec.describe Aggredator::Matchers do
 
   end
 
-  describe Aggredator::MetadataMatcher do
+  describe Aggredator::HeadersMatcher do
     success_cases = [
       {
         metadata: metadata.deep_dup,

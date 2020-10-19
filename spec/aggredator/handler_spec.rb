@@ -56,7 +56,7 @@ RSpec.describe Aggredator::Handler do
         subject.register *block_rule, &block
       }.to change { handlers.size }.from(0).to(1)
       key, value = handlers.first
-      expect(key).to be_a Aggredator::MetadataMatcher
+      expect(key).to be_a Aggredator::HeadersMatcher
       expect(value).to eq block
     end
 
