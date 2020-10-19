@@ -110,7 +110,16 @@ module Aggredator
   end
 
   class FullMatcher < BaseMatcher
-    def initialize(hrule, prule, drule)
+    def initialize(*args)
+      if args.size == 1
+        arg = args[0]
+        hrule = arg[:headers]
+        prule = arg[:payload]
+        drule = arg[:delivery_info]
+      else
+        hrule, prule, drule = *args
+      end
+
       @hm = Aggredator::HeadersMatcher.new(hrule)
       @pm = Aggredator::PayloadMatcher.new(prule)
       @dm = Aggredator::DeliveryInfoMatcher.new(drule)
