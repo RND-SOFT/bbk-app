@@ -33,6 +33,8 @@ module Aggredator
     SIMPLE_POOL = :simple
     CONCURRENT_POOL = :concurrent
 
+    class StopException < RuntimeError; end
+
     def initialize observer, pool_size: 3, logger: Aggredator::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy
       @observer = observer
       @pool_size = pool_size
@@ -118,12 +120,16 @@ module Aggredator
       results = build_processing_stack.call(message).select {|e| e.is_a? Aggredator::Dispatcher::Result}
       logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
       send_results(message, results).value
+    rescue StopException => e
+      logger.warn "StopException info: #{e.inspect}"
+      logger.warn "StopException on processing message with delivery_info = #{message&.delivery_info.inspect} headers = #{message.headers.inspect}"
+      close()
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
       message.consumer.nack(message, error: e)
-      logger.debug e.backtrace
-      logger.error "Exception on processing message with headers = #{message.headers.inspect}"
       logger.error "Exception info: #{e.inspect}"
+      logger.debug e.backtrace
+      logger.error "Exception on processing message with delivery_info = #{message&.delivery_info.inspect} headers = #{message.headers.inspect}"
     end
 
     def process_message message
