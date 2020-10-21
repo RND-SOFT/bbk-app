@@ -208,7 +208,7 @@ module Aggredator
 
     def format_di delivery_info
       delivery_info&.to_h.tap do |di|
-        if di[:channel].is_a?(::Bunny::Channel)
+        if di && di[:channel].is_a?(::Bunny::Channel)
           di[:delivery_tag] = di[:delivery_tag].to_i
           di[:consumer] = 'amqp'
           di[:channel] = di[:channel].id
