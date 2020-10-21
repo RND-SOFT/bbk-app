@@ -33,7 +33,9 @@ module Aggredator
     SIMPLE_POOL = :simple
     CONCURRENT_POOL = :concurrent
 
-    class StopException < RuntimeError; end
+    class Exception < RuntimeError; end
+    class StopException < Exception; end
+    class RejectException < Exception; end
 
     def initialize observer, pool_size: 3, logger: Aggredator::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy
       @observer = observer
@@ -122,14 +124,18 @@ module Aggredator
       send_results(message, results).value
     rescue StopException => e
       logger.warn "StopException info: #{e.inspect}"
-      logger.warn "StopException on processing message with delivery_info = #{message&.delivery_info.inspect} headers = #{message.headers.inspect}"
+      logger.warn "StopException on processing message with delivery_info = #{format_di(message&.delivery_info).inspect} headers = #{message.headers.inspect}"
       close()
+    rescue RejectException => e
+      ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
+      message.consumer.nack(message, error: e)
+      # SKIP DEBUG LOGGING
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
       message.consumer.nack(message, error: e)
       logger.error "Exception info: #{e.inspect}"
       logger.debug e.backtrace
-      logger.error "Exception on processing message with delivery_info = #{message&.delivery_info.inspect} headers = #{message.headers.inspect}"
+      logger.error "Exception on processing message with delivery_info = #{format_di(message&.delivery_info).inspect} headers = #{message.headers.inspect}"
     end
 
     def process_message message
@@ -198,6 +204,17 @@ module Aggredator
       end
       # return Concurrent::Promises.resolvable_future
       publisher.publish(result)
+    end
+
+    def format_di delivery_info
+      delivery_info&.to_h.tap do |di|
+        if di[:channel].is_a?(::Bunny::Channel)
+          di[:delivery_tag] = di[:delivery_tag].to_i
+          di[:consumer] = 'amqp'
+          di[:channel] = di[:channel].id
+          di[:message_consumer] = di[:message_consumer].class.to_s
+        end
+      end
     end
 
   end
