@@ -8,7 +8,7 @@ module Aggredator
 
       def call(msg)
         ::ActiveRecord::Base.connection_pool.with_connection do
-          app(msg)
+          app.call(msg)
         end
       end
 
