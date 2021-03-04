@@ -38,7 +38,7 @@ variables:
     - docker-compose build --force-rm test-${CASE}
     - docker-compose up --force-recreate -t 1 --remove-orphans -d test-${CASE}
 
-    - DOCKER_CONTAINER_ID=`docker-compose ps -q test-${CASE} | head -n 1`
+    - DOCKER_CONTAINER_ID=`docker-compose ps -q test-${CASE} | head -n 1 || true`
     - docker exec $DOCKER_CONTAINER_ID bundle exec rspec | tee .coverage
     - docker cp $DOCKER_CONTAINER_ID:/home/app/coverage ./coverage
     - docker cp $DOCKER_CONTAINER_ID:/home/app/rspec.xml rspec-${CASE}.xml
