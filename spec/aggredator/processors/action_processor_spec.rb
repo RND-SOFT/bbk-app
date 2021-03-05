@@ -100,7 +100,8 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
 
     it 'call processor' do
       results = []
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action', action: processor_cls.action, headers: message.headers).and_call_original
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action',
+                                                                        action: processor_cls.action, headers: message.headers).and_call_original
       expect(@handler).to receive(:call).with(message, results: results)
       subject.process message, results: results
     end
@@ -108,7 +109,8 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
     it 'not found processor for action' do
       results = []
       new_action = message.headers[:action] = SecureRandom.hex
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action_missing', action: new_action, headers: message.headers)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.action_missing',
+                                                                        action: new_action, headers: message.headers)
       expect(@handler).not_to receive(:call)
       expect(subject).to receive(:make_error_answer).and_call_original
       subject.process message, results: results
@@ -122,7 +124,10 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
 
     it 'catch error' do
       subject.instance_variable_set('@actions', nil)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.exception', hash_including(action: message.headers[:action], headers: message.headers))
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.exception',
+                                                                        hash_including(
+                                                                          action: message.headers[:action], headers: message.headers
+                                                                        ))
       results = []
       subject.process message, results: results
       expect(results).not_to be_empty

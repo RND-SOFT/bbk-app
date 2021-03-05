@@ -10,7 +10,6 @@ require 'aggredator/dispatcher'
 require 'aggredator/processors'
 require 'aggredator/handler'
 
-
 module Aggredator
   module App
     class << self

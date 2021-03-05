@@ -11,10 +11,8 @@ require 'aggredator/processors/exchange_logs_processor'
 require 'aggredator/processors/wrap_processor'
 
 module Aggredator
-
   Processor = Aggredator::Processors::Base
 
   module Processors
   end
-
 end

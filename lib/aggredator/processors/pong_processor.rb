@@ -1,8 +1,6 @@
 module Aggredator
   module Processors
-
     class PongProcessor < Base
-
       def self.action
         'pong'
       end
@@ -12,10 +10,6 @@ module Aggredator
       end
 
       def process(*); end
-
     end
-
   end
-
 end
-

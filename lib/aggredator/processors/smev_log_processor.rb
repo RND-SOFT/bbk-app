@@ -30,10 +30,13 @@ module Aggredator
         if (_ticket = model_class.find_by_ticket_id(message.headers[:ticket]))
           results << Aggredator::Dispatcher::Result.new(
             "mq://inner@service.#{smev_service_name}.request",
-            Aggredator::Api::V1::Actions::ExchangeLogRequest.new(message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload)
+            Aggredator::Api::V1::Actions::ExchangeLogRequest.new(
+              message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload
+            )
           )
         else
-          error_msg = make_error_answer "Couldn't find request with ticket id: #{message.headers[:ticket].inspect}", message.properties, message.payload
+          error_msg = make_error_answer "Couldn't find request with ticket id: #{message.headers[:ticket].inspect}",
+                                        message.properties, message.payload
           results << Aggredator::Dispatcher::Result.new(
             "mq://outer@#{message.reply_to}",
             error_msg

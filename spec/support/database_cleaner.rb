@@ -29,7 +29,6 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
   end
 
-
   config.after(:all, persist: true) do
     DatabaseCleaner.strategy = :truncation
     DatabaseCleaner.clean

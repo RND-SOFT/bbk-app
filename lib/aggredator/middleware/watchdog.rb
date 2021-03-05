@@ -1,9 +1,6 @@
 module Aggredator
-
   module Middleware
-
     class Watchdog
-
       attr_reader :publisher, :route, :reply_to, :delay, :timeout, :watcher_delay, :pinger_thread, :watcher_thread
 
       def initialize(publisher, route, reply_to, delay: 20, timeout: 60, watcher_delay: 40)
@@ -16,7 +13,7 @@ module Aggredator
         @watcher_delay = watcher_delay
       end
 
-      def build app
+      def build(app)
         @app = app
         self
       end
@@ -46,10 +43,10 @@ module Aggredator
             publisher.publish Aggredator::Dispatcher::Result.new(
               route,
               Aggredator::Api::V1::Ping.new(
-                  {
-                      message_id: SecureRandom.hex,
-                      reply_to: @reply_to,
-                  }
+                {
+                  message_id: SecureRandom.hex,
+                  reply_to: @reply_to
+                }
               )
             )
             sleep delay
@@ -71,9 +68,6 @@ module Aggredator
       def touch
         @timestamp = Time.now.to_i
       end
-
     end
-
   end
-
 end

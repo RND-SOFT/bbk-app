@@ -32,7 +32,6 @@ module Aggredator
         @closed = true
         @queue << CLOSE_VALUE
       end
-      
     end
   end
 end

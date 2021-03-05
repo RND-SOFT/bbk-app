@@ -1,16 +1,14 @@
 module Aggredator
-
   class Handler
-
     def initialize(&block)
       @handlers = {}
       @default =  if block_given?
-        block
-      else
-        ->(*_args) do
-          # delivery_info, properties, body = message
-        end
-      end
+                    block
+                  else
+                    lambda do |*_args|
+                      # delivery_info, properties, body = message
+                    end
+                  end
     end
 
     # регистрация обработчика
@@ -31,15 +29,15 @@ module Aggredator
       end
 
       callable = if args.first.is_a?(Class)
-        Aggredator::Factory.new(*args)
-      elsif args.first.respond_to?(:call)
-        args.first
-      else
-        raise "callable object or class missing: #{args.inspect}"
-      end
+                   Aggredator::Factory.new(*args)
+                 elsif args.first.respond_to?(:call)
+                   args.first
+                 else
+                   raise "callable object or class missing: #{args.inspect}"
+                 end
 
       matcher = Aggredator::Matchers.create(type, *[rule].flatten)
-      @handlers.each do |(m, c)|
+      @handlers.each do |(m, _c)|
         $logger&.warn("Handler with same matcher already registered: #{m.inspect}") if m == matcher
       end
 
@@ -58,8 +56,5 @@ module Aggredator
         end
       end
     end
-
-
   end
-
 end

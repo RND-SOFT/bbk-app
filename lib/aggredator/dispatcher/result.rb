@@ -1,9 +1,6 @@
 module Aggredator
-
   class Dispatcher
-
     class Result
-
       attr_accessor :route, :message, :properties
 
       def initialize(route, message, properties = {})
@@ -14,10 +11,6 @@ module Aggredator
         @message = message
         @properties = properties.deep_dup
       end
-
     end
-  
   end
-
 end
-

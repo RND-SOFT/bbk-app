@@ -1,14 +1,13 @@
 RSpec.describe Aggredator::Dispatcher::Message do
-
-  let(:delivery_info) {
+  let(:delivery_info) do
     OpenStruct.new(
       routing_code: SecureRandom.hex,
       delivery_tag: SecureRandom.hex,
       redelivered?: [true, false].sample
     )
-  }
+  end
 
-  let(:properties) {
+  let(:properties) do
     {
       headers: {
         user_id: SecureRandom.hex,
@@ -16,16 +15,15 @@ RSpec.describe Aggredator::Dispatcher::Message do
         message_id: SecureRandom.uuid
       }
     }
-  }
+  end
 
-  let(:body){
-    JSON.generate Hash[(2 + Random.rand(5)).times.map {[SecureRandom.hex, SecureRandom.hex]}]
-  }
+  let(:body) do
+    JSON.generate Hash[Random.rand(2..6).times.map { [SecureRandom.hex, SecureRandom.hex] }]
+  end
 
   subject { described_class.new(delivery_info, properties, body) }
 
   context 'ctor' do
-  
     it 'success initialize' do
       subj = described_class.new delivery_info, properties, body
       expect(subj.delivery_info).to eq delivery_info
@@ -47,14 +45,16 @@ RSpec.describe Aggredator::Dispatcher::Message do
     end
 
     it 'properties is not hash' do
-      expect{ described_class.new(delivery_info, 1, body) }.to raise_error(Aggredator::Dispatcher::UndeliverableError, /must be a Hash/)
+      expect do
+        described_class.new(delivery_info, 1,
+                            body)
+      end.to raise_error(Aggredator::Dispatcher::UndeliverableError, /must be a Hash/)
     end
 
     it 'body not json' do
       subj = described_class.new delivery_info, properties, SecureRandom.hex
       expect(subj.payload).to eq({})
     end
-
   end
 
   it 'id getter' do
@@ -62,7 +62,6 @@ RSpec.describe Aggredator::Dispatcher::Message do
   end
 
   context 'reply to getter' do
-    
     it 'return properties reply_to' do
       value = subject.properties[:reply_to] = SecureRandom.hex
       expect(subject.reply_to).to eq value
@@ -78,7 +77,6 @@ RSpec.describe Aggredator::Dispatcher::Message do
       subject.properties[:headers] = {}
       expect(subject.reply_to).to eq subject.user_id
     end
-
   end
 
   it 'delivery_tag getter' do
@@ -100,5 +98,4 @@ RSpec.describe Aggredator::Dispatcher::Message do
     properties[:user_id] = SecureRandom.uuid
     expect { described_class.new delivery_info, properties, body }.to raise_error(RuntimeError, /Diffrent user_id/)
   end
-
 end

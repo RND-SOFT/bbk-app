@@ -1,22 +1,20 @@
 RSpec.describe Aggredator::Factory do
-
   class Test
-
     RESULT_VALUE = SecureRandom.hex
 
     attr_reader :args
 
-    def initialize *args
+    def initialize(*args)
       @args = args
     end
 
-    def call(*args)
+    def call(*_args)
       RESULT_VALUE
     end
   end
 
-  let(:instance_args) { (2 + Random.rand(5)).times.map { SecureRandom.hex }  }
-  let(:method_params) { (2 + Random.rand(5)).times.map { SecureRandom.hex }  }
+  let(:instance_args) { Random.rand(2..6).times.map { SecureRandom.hex }  }
+  let(:method_params) { Random.rand(2..6).times.map { SecureRandom.hex }  }
 
   subject { described_class.new Test, *instance_args }
 
@@ -31,8 +29,7 @@ RSpec.describe Aggredator::Factory do
 
   it 'call' do
     expect_any_instance_of(Test).to receive(:call).with(*method_params).and_call_original
-    result = subject.call *method_params
+    result = subject.call(*method_params)
     expect(result).to eq Test::RESULT_VALUE
   end
-
 end

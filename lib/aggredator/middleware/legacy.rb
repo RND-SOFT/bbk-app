@@ -1,11 +1,8 @@
 require 'aggredator/api/v1'
 
 module Aggredator
-
   module Middleware
-  
     class Legacy < Aggredator::Middleware::Base
-    
       def call(msg)
         if msg.headers[:type] == 'Smev3Request'
           msg.headers[:type] = Aggredator::Api::V1::ActionRequest.type
@@ -19,11 +16,8 @@ module Aggredator
         elsif msg.headers[:type] == 'result'
           msg.headers[:type] = Aggredator::Api::V1::ActionResponse.type
         end
-       app.call(msg)
+        app.call(msg)
       end
-
     end
-
   end
-
 end

@@ -1,6 +1,5 @@
 RSpec.describe Aggredator::Processors::PingProcessor do
-
-  let(:message) {
+  let(:message) do
     Aggredator::Dispatcher::Message.new(
       OpenStruct.new(delivery_tab: SecureRandom.uuid),
       {
@@ -12,7 +11,7 @@ RSpec.describe Aggredator::Processors::PingProcessor do
       },
       '{}'
     )
-  }
+  end
 
   subject { described_class.new }
 
@@ -30,12 +29,11 @@ RSpec.describe Aggredator::Processors::PingProcessor do
 
   it 'process message' do
     results = []
-    expect {
+    expect do
       subject.process(message, results: results)
-    }.to change { results.size }.by(1)
+    end.to change { results.size }.by(1)
     res = results.first
     expect(res).to be_a Aggredator::Dispatcher::Result
     expect(res.route.to_s).to eq "mq://outer@#{message.reply_to}"
   end
-
 end

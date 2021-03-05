@@ -1,6 +1,6 @@
 class ObserverMock
-
   attr_accessor :errors, :msg
+
   def raise_error(str)
     @error = str
   end
@@ -10,7 +10,7 @@ class ObserverMock
   end
 
   def match(*_args)
-    [{}, ->(msg, results:) {
+    [{}, lambda { |msg, results:|
       @msg = msg
       if @error
         raise @error
@@ -22,5 +22,4 @@ class ObserverMock
       end
     }]
   end
-
 end

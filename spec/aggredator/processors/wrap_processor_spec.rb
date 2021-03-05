@@ -1,7 +1,6 @@
 RSpec.describe Aggredator::Processors::WrapProcessor do
-
   let(:wrapped) { Aggredator::Processors::PingProcessor }
-  let(:message) {
+  let(:message) do
     Aggredator::Dispatcher::Message.new(
       OpenStruct.new,
       {
@@ -13,7 +12,7 @@ RSpec.describe Aggredator::Processors::WrapProcessor do
       },
       '{}'
     )
-  }
+  end
 
   subject { described_class.new wrapped }
 
@@ -27,12 +26,12 @@ RSpec.describe Aggredator::Processors::WrapProcessor do
 
   it 'call preprocess message' do
     val = SecureRandom.hex
-    expect(subject.preprocess_message val).to eq val
+    expect(subject.preprocess_message(val)).to eq val
   end
 
   it 'call postprocess result' do
     res, msg = 2.times.map { SecureRandom.hex }
-    expect(subject.postprocess_result res, msg).to eq res
+    expect(subject.postprocess_result(res, msg)).to eq res
   end
 
   it 'process message with wrapped class' do
@@ -48,6 +47,6 @@ RSpec.describe Aggredator::Processors::WrapProcessor do
     results = []
     expect(subj).to receive(:process).with(message, results: results).and_call_original
     expect(wrapped_obj).to receive(:process).with(message, results: []).and_call_original
-    subj.call(message, results: results) 
+    subj.call(message, results: results)
   end
 end

@@ -22,14 +22,22 @@ module Aggredator
         @pool.wait_for_termination
       end
 
-      def push *args
+      def push(*args)
         @stream.push(*args)
       end
 
       def stop(timeout = 5)
-        @stream.close rescue nil
+        begin
+          @stream.close
+        rescue StandardError
+          nil
+        end
 
-        @pool.shutdown rescue nil
+        begin
+          @pool.shutdown
+        rescue StandardError
+          nil
+        end
         @pool.kill unless @pool.wait_for_termination(timeout)
       end
     end

@@ -1,5 +1,4 @@
 RSpec.describe Aggredator::Processors::SmevLogRequest do
-
   let(:smev_service_name) { SecureRandom.hex }
   let(:service_name) { SecureRandom.hex }
 
@@ -18,7 +17,6 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
   end
 
   context 'ctor' do
-  
     it 'success' do
       subj = described_class.new ServiceRequest, smev_service_name, service_name
       expect(subj.model_class).to eq ServiceRequest
@@ -28,20 +26,19 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
     it 'invalid model type' do
       expect { described_class.new Hash, smev_service_name, service_name }.to raise_error(TypeError)
     end
-    
   end
 
   context 'process message' do
-  
-    let(:request) { ServiceRequest.create(
+    let(:request) do
+      ServiceRequest.create(
         ticket_id: SecureRandom.uuid,
         consumer: SecureRandom.hex,
         reply_to: SecureRandom.hex
       )
-    }
+    end
     let(:reply_to) { SecureRandom.hex }
 
-    let(:headers) {
+    let(:headers) do
       {
         message_id: SecureRandom.uuid,
         reply_to: reply_to,
@@ -49,11 +46,11 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
         ticket: request.ticket_id,
         consumer: SecureRandom.hex
       }
-    }
+    end
 
-    let(:message) {
-      Aggredator::Dispatcher::Message.new OpenStruct.new, {headers: headers}, '{}'
-    }
+    let(:message) do
+      Aggredator::Dispatcher::Message.new OpenStruct.new, { headers: headers }, '{}'
+    end
 
     it 'success process message' do
       results = []
@@ -88,7 +85,5 @@ RSpec.describe Aggredator::Processors::SmevLogRequest do
       payload = res_msg.payload
       expect(payload[:success]).to eq false
     end
-
   end
-
 end

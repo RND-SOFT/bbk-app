@@ -1,8 +1,6 @@
 module Aggredator
-
   module Middleware
     class Base
-
       attr_reader :app
 
       def initialize(app)
@@ -12,10 +10,6 @@ module Aggredator
       def call(_msg)
         raise 'Middleware not implemented!'
       end
-
     end
-
   end
-
 end
-

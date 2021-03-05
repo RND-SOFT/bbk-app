@@ -1,25 +1,23 @@
 RSpec.describe Aggredator::Dispatcher do
-
   let(:consumer) { MockConsumer.new }
   let(:incoming) { OpenStruct.new consumer: consumer, headers: {}, payload: {} }
   let(:observer) { ObserverMock.new }
-  let(:result_message) {
+  let(:result_message) do
     Aggredator::Dispatcher::Result.new(
       'amqp://example.com',
       Aggredator::Api::V1::Message.new({}, {})
     )
-  }
-  let(:answer_message) {
+  end
+  let(:answer_message) do
     Aggredator::Dispatcher::Result.new(
       "amqp://#{Aggredator::Dispatcher::ANSWER_DOMAIN}@example.com",
       Aggredator::Api::V1::Message.new({}, {})
     )
-  }
+  end
   let(:publisher) { MockPublisher.new }
   subject { described_class.new observer }
 
   class MockConsumer
-
     attr_reader :acked, :nacked
 
     def initialize
@@ -27,18 +25,16 @@ RSpec.describe Aggredator::Dispatcher do
       @nacked = []
     end
 
-    def ack incoming, answer: nil
-      @acked << {incoming: incoming, answer: answer}
+    def ack(incoming, answer: nil)
+      @acked << { incoming: incoming, answer: answer }
     end
 
-    def nack incoming, error: nil
+    def nack(incoming, error: nil)
       @nacked << incoming
     end
-
   end
 
   class MockPublisher
-
     attr_reader :futures
 
     def initialize
@@ -46,15 +42,14 @@ RSpec.describe Aggredator::Dispatcher do
     end
 
     def protocols
-      ["amqp"]
+      ['amqp']
     end
-  
-    def publish result
+
+    def publish(_result)
       f = Concurrent::Promises.resolvable_future
       futures << f
       f
     end
-  
   end
 
   it 'ctor' do
@@ -66,15 +61,15 @@ RSpec.describe Aggredator::Dispatcher do
   end
 
   {
-    'register consumer' => [:register_consumer, :consumers],
-    'register publisher' => [:register_publisher, :publishers],
-    'register middleware' => [:register_middleware, :middlewares],
+    'register consumer' => %i[register_consumer consumers],
+    'register publisher' => %i[register_publisher publishers],
+    'register middleware' => %i[register_middleware middlewares]
   }.each do |name, (method_name, prop_name)|
     it name do
       value = SecureRandom.hex
-      expect {
+      expect do
         subject.send(method_name, value)
-      }.to change{subject.send(prop_name).size}.from(0).to(1)
+      end.to change { subject.send(prop_name).size }.from(0).to(1)
     end
   end
 
@@ -96,10 +91,9 @@ RSpec.describe Aggredator::Dispatcher do
   end
 
   context 'process' do
-  
     it 'success processing' do
-      results = [Aggredator::Dispatcher::Result.new("http://example.com", Aggredator::Api::V1::Message.new({}, {}))]
-      processor = Proc.new do |message|
+      results = [Aggredator::Dispatcher::Result.new('http://example.com', Aggredator::Api::V1::Message.new({}, {}))]
+      processor = proc do |message|
         expect(incoming).to eq message
         results
       end
@@ -112,20 +106,19 @@ RSpec.describe Aggredator::Dispatcher do
       error = RuntimeError.new "Expected Test Error: #{SecureRandom.hex}"
       expect(subject).to receive(:build_processing_stack).and_raise(error)
       expect(consumer).to receive(:nack).with(incoming, error: error)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming, exception: error)
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming,
+                                                                                                exception: error)
       subject.send(:process, incoming)
     end
-
   end
 
   context '#find_processor' do
-  
     it 'find processor factory' do
       factory = Aggredator::Factory.new String
       expect(factory).to receive(:create).and_call_original
       expect(observer).to receive(:match).and_return([{}, factory])
       _, processor = subject.send(:find_processor, incoming)
-      expect(processor).to eq String.new
+      expect(processor).to eq ''
     end
 
     it 'find callable processor' do
@@ -133,11 +126,9 @@ RSpec.describe Aggredator::Dispatcher do
       expect(matched).to be_a Hash
       expect(processor).to respond_to(:call)
     end
-
   end
 
   context '#build_processing_stack' do
-  
     it 'empty middlewares' do
       expect(subject.middlewares).to be_empty
       stack = subject.send(:build_processing_stack)
@@ -147,9 +138,7 @@ RSpec.describe Aggredator::Dispatcher do
     end
 
     it 'callable middleware' do
-
       middleware = Class.new(Aggredator::Middleware::Base) do
-
         MARKER = SecureRandom.uuid
 
         def self.marker
@@ -173,14 +162,14 @@ RSpec.describe Aggredator::Dispatcher do
     end
 
     it 'callable factory' do
-    
       middleware_factory = Class.new do
         attr_reader :value, :app, :in_msg
-        def initialize value
+
+        def initialize(value)
           @value = value
         end
 
-        def build app
+        def build(app)
           @app = app
           self
         end
@@ -191,7 +180,6 @@ RSpec.describe Aggredator::Dispatcher do
           results << @value
           results
         end
-
       end
 
       marker = SecureRandom.hex
@@ -204,14 +192,12 @@ RSpec.describe Aggredator::Dispatcher do
       expect(results).to be_a Array
       expect(results.last).to eq marker
     end
-
   end
 
-
   context '#process_message' do
-
     it 'success processing message' do
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.process', hash_including(msg: incoming))
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.process',
+                                                                        hash_including(msg: incoming))
       results = subject.send(:process_message, incoming)
       expect(results).to be_a Array
     end
@@ -231,49 +217,45 @@ RSpec.describe Aggredator::Dispatcher do
       processor = mock_processor.new
       expect(subject).to receive(:find_processor).and_return([{}, processor])
       expect(ActiveSupport::Notifications).to receive(:instrument).and_raise(error)
-      expect {
+      expect do
         @results = subject.send(:process_message, incoming)
-      }.not_to raise_error
+      end.not_to raise_error
       expect(@results).to be_a Array
       expect(@results).to eq [processor.marker]
       expect(processor.e).to eq error
       expect(processor.message).to eq incoming
     end
-  
 
     it 'raise error' do
       error = RuntimeError.new SecureRandom.hex
       expect(ActiveSupport::Notifications).to receive(:instrument).and_raise(error)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.exception', hash_including(msg: incoming, exception: error))
-      expect{
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.exception',
+                                                                        hash_including(msg: incoming, exception: error))
+      expect do
         subject.send(:process_message, incoming)
-      }.to raise_error(error)
+      end.to raise_error(error)
     end
-
   end
 
   context '#publish_result' do
-
     it 'not found publisher' do
-      expect {
+      expect do
         subject.send(:publish_result, result_message)
-      }.to raise_error(/Not found publisher/)
+      end.to raise_error(/Not found publisher/)
     end
 
     it 'success publish' do
       subject.register_publisher publisher
-      expect {
+      expect do
         subject.send(:publish_result, result_message)
-      }.not_to raise_error
+      end.not_to raise_error
     end
-
   end
 
   context '#send_results' do
-
-    before(:each) {
+    before(:each) do
       subject.register_publisher publisher
-    }
+    end
 
     it 'success send results' do
       results = ([result_message] * 5) << answer_message
@@ -289,7 +271,8 @@ RSpec.describe Aggredator::Dispatcher do
       results = [result_message] * 2
       error = SecureRandom.hex
       expect(consumer).to receive(:nack).with(incoming, error: error)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', hash_including(message: error.inspect))
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected',
+                                                                        hash_including(message: error.inspect))
       subject.send(:send_results, incoming, results)
       futures = publisher.futures
       expect(futures.size).to eq 2
@@ -301,17 +284,16 @@ RSpec.describe Aggredator::Dispatcher do
     it 'failed processing rejected message' do
       error = RuntimeError.new SecureRandom.hex
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected', any_args)
-      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', hash_including(msg: incoming, exception: error))
+      expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception',
+                                                                        hash_including(msg: incoming, exception: error))
       expect(subject).to receive(:sleep).with(10)
       expect(subject).to receive(:exit!).with(1)
       subject.send(:send_results, incoming, [result_message])
 
       expect(consumer).to receive(:nack).and_raise(error)
       future = publisher.futures.first
-      future.reject "test"
+      future.reject 'test'
       sleep 0.1
     end
-
   end
-
 end

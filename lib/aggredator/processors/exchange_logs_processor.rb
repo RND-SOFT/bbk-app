@@ -23,7 +23,9 @@ module Aggredator
 
         results << Aggredator::Dispatcher::Result.new(
           "mq://inner@service.#{service_name}.request",
-          Aggredator::Api::V1::Actions::ExchangeLogRequest.new(message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload)
+          Aggredator::Api::V1::Actions::ExchangeLogRequest.new(
+            message.headers.except(:user_id).merge(consumer: message.reply_to || message.user_id), message.payload
+          )
         )
 
         results

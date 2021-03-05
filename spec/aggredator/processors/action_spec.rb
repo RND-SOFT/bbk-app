@@ -1,5 +1,4 @@
 RSpec.describe Aggredator::Processors::Action do
-
   subject { described_class.new }
 
   it 'static action' do
@@ -10,5 +9,4 @@ RSpec.describe Aggredator::Processors::Action do
     expect(described_class).to receive(:action).and_call_original
     expect { subject.action }.to raise_error(RuntimeError, /not implemented/)
   end
-
 end

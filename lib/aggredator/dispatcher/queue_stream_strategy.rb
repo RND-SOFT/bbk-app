@@ -20,20 +20,28 @@ module Aggredator
           end
         end
 
-        @pool.shutdown rescue nil
+        begin
+          @pool.shutdown
+        rescue StandardError
+          nil
+        end
         @pool.kill unless @pool.wait_for_termination(@stop_queue_timeout)
       ensure
         @unblocker.push(:ok)
       end
 
-      def push *args
+      def push(*args)
         @stream.push(*args)
       end
 
       def stop(timeout = 5)
         @stop_queue_timeout = timeout
 
-        @stream.close rescue nil
+        begin
+          @stream.close
+        rescue StandardError
+          nil
+        end
         @unblocker.pop
       end
     end

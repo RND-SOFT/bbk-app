@@ -16,6 +16,5 @@ module Aggredator
     def call(*args)
       create.call(*args)
     end
-
   end
 end

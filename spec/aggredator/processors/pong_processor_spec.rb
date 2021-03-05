@@ -1,5 +1,4 @@
 RSpec.describe Aggredator::Processors::PongProcessor do
-
   subject { described_class.new }
 
   it 'check action' do
@@ -13,5 +12,4 @@ RSpec.describe Aggredator::Processors::PongProcessor do
     expect(rule.first).to eq :meta
     expect(rule.last).to eq Aggredator::Api::V1::Pong.meta_match_rule
   end
-
 end

@@ -1,9 +1,6 @@
 module Aggredator
-  
   module Processors
-
     class PingProcessor < Base
-
       def self.action
         'ping'
       end
@@ -20,10 +17,6 @@ module Aggredator
 
         results
       end
-
     end
-
   end
-
 end
-
