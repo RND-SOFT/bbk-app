@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'sqlite3', '~> 1.4'
+  spec.add_development_dependency 'jaeger-client'
 
   spec.add_development_dependency 'byebug'
   spec.add_development_dependency 'rspec_junit_formatter'
