@@ -131,12 +131,17 @@ RSpec.describe Aggredator::Processors::ActionProcessor do
       subject.instance_variable_set('@actions', nil)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('action_processor.exception', hash_including(action: message.headers[:action], headers: message.headers) )
       results = []
-      subject.process message, results: results
-      expect(results).not_to be_empty
-      msg = results.first
-      expect(msg).to be_a Aggredator::Dispatcher::Result
-      expect(msg.route.uri.to_s).to eq "mq://outer@#{message.reply_to}"
-      expect(msg.message).to be_a Aggredator::Api::V1::Error
+      expect {
+        subject.process message, results: results
+      }.to raise_error(StandardError)
+      #Теперь решили кидать исключение, а не обрабатывать его, отсылая error response
+      expect(results).to be_empty
+
+      #expect(results).not_to be_empty
+      #msg = results.first
+      #expect(msg).to be_a Aggredator::Dispatcher::Result
+      #expect(msg.route.uri.to_s).to eq "mq://outer@#{message.reply_to}"
+      #expect(msg.message).to be_a Aggredator::Api::V1::Error
     end
 
   end

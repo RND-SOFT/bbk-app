@@ -71,13 +71,16 @@ module Aggredator
         $logger&.error "Exception: #{e.inspect}"
         $logger&.error e.backtrace.join("\n")
         ActiveSupport::Notifications.instrument 'action_processor.exception', action: current_action, headers: message.headers, exception: e, processor: handler
+        # Решили кидать исклюение и завершаться, а не слать Error Response
         results.clear
-        results << Aggredator::Dispatcher::Result.new(
-          "mq://outer@#{message.reply_to}",
-          make_error_answer("Exception in action[#{current_action}]: #{e.inspect}", message)
-        )
+        raise
+        
+        #results << Aggredator::Dispatcher::Result.new(
+        #  "mq://outer@#{message.reply_to}",
+        #  make_error_answer("Exception in action[#{current_action}]: #{e.inspect}", message)
+        #)
   
-        results
+        #results
       end
   
     end
