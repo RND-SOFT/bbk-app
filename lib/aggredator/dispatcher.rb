@@ -6,7 +6,7 @@ require 'aggredator/dispatcher/undeliverable_error'
 
 module Aggredator
   class Dispatcher
-    attr_accessor :queue, :client, :observer, :before_transformers, :domains, :watchdog, :after_transformers
+    attr_accessor :queue, :client, :observer, :before_transformers, :domains, :watchdog, :after_transformers, :force_quit
     attr_reader :executor
 
     def initialize(queue, client, observer, domains, watchdog: nil, executor: Aggredator::Executor::Default.new)
@@ -17,6 +17,7 @@ module Aggredator
       @after_transformers = []
       @domains = domains
       @watchdog = watchdog
+      @force_quit = false
 
       self.executor = executor
     end
@@ -59,10 +60,20 @@ module Aggredator
       send_results(mqmsg, msg, results)
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: mqmsg, exception: e
-      client.reject delivery_info.delivery_tag if delivery_info&.delivery_tag
       $logger&.debug e.backtrace
       $logger&.error "Exception on processing message with properties = #{properties.inspect}"
       $logger&.error "Exception info: #{e.inspect}"
+      if @force_quit
+        Thread.handle_interrupt(Exception => :never) do
+          $logger&.fatal "Force quitting without rejection..."
+          client.connection.close rescue nil
+          sleep 10
+          $logger&.fatal "Force quitting: 13"
+          exit!(13)
+        end
+      else
+        client.reject delivery_info.delivery_tag if delivery_info&.delivery_tag
+      end
     end
 
     def publish_results(results)
