@@ -108,7 +108,8 @@ RSpec.describe Aggredator::Dispatcher do
       expect(consumer).to receive(:nack).with(incoming, error: error)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming,
                                                                                                 exception: error)
-      subject.send(:process, incoming)
+
+      expect { subject.send(:process, incoming) }.to raise_error(RuntimeError)
     end
   end
 
@@ -269,7 +270,7 @@ RSpec.describe Aggredator::Dispatcher do
 
     it 'failed publishing' do
       results = [result_message] * 2
-      error = SecureRandom.hex
+      error = RuntimeError.new SecureRandom.hex
       expect(consumer).to receive(:nack).with(incoming, error: error)
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.request.result_rejected',
                                                                         hash_including(message: error.inspect))
@@ -292,7 +293,7 @@ RSpec.describe Aggredator::Dispatcher do
 
       expect(consumer).to receive(:nack).and_raise(error)
       future = publisher.futures.first
-      future.reject 'test'
+      future.reject error
       sleep 0.1
     end
   end

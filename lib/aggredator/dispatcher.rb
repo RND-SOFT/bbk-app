@@ -9,6 +9,7 @@ require 'aggredator/dispatcher/queue_stream_strategy'
 require 'aggredator/dispatcher/direct_stream_strategy'
 require 'aggredator/dispatcher/message_fallback_policies/base'
 require 'aggredator/dispatcher/message_fallback_policies/reject'
+require 'aggredator/dispatcher/message_fallback_policies/requeue'
 require 'concurrent'
 
 module Aggredator
@@ -26,6 +27,7 @@ module Aggredator
   end 
 
   class Dispatcher
+    attr_accessor :supress_exception
     attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
     ANSWER_DOMAIN = 'answer'
@@ -50,6 +52,7 @@ module Aggredator
       @pool_factory = pool_factory
       @stream_strategy_class = stream_strategy
       @message_fallback_policy = message_fallback_policy
+      @supress_exception = true
     end
 
     def register_consumer(consumer)
@@ -77,6 +80,7 @@ module Aggredator
         rescue => e
           logger.fatal "E[#{@stream_strategy_class}]: #{e}"
           logger.fatal "E[#{@stream_strategy_class}]: #{e.backtrace.join("\n")}"
+          raise unless supress_exception
         end
       end
     end
@@ -136,6 +140,7 @@ module Aggredator
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
       @message_fallback_policy.call(e, message)
+      raise
     end
 
     def process_message message
@@ -185,8 +190,9 @@ module Aggredator
         error = errors.compact.first
         ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: incoming, message: error.inspect
         logger.error "[Message#{message_id}] Publish failed: #{error.inspect}"
-        incoming.consumer.nack(incoming, error: error)
+        @message_fallback_policy.call(error, incoming)
       rescue StandardError => e
+        STDERR.puts e.backtrace
         STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting: #{e.inspect}"
         ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: incoming, exception: e
         sleep(10)

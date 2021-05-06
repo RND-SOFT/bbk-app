@@ -27,6 +27,7 @@ module Aggredator
             rescue StandardError => e
               warn "[CRITICAL]: ThreadPool exception: #{e}"
               warn "[CRITICAL]: #{e.backtrace.join("\n")}"
+              # Thread.main.raise e
               exit(1)
             end
           end
