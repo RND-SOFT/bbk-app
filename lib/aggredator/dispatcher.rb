@@ -7,6 +7,8 @@ require 'aggredator/dispatcher/pool_proxy_stream'
 require 'aggredator/dispatcher/undeliverable_error'
 require 'aggredator/dispatcher/queue_stream_strategy'
 require 'aggredator/dispatcher/direct_stream_strategy'
+require 'aggredator/dispatcher/message_fallback_policies/base'
+require 'aggredator/dispatcher/message_fallback_policies/reject'
 require 'concurrent'
 
 module Aggredator
@@ -37,7 +39,7 @@ module Aggredator
     class StopException < Exception; end
     class RejectException < Exception; end
 
-    def initialize observer, pool_size: 3, logger: Aggredator::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy
+    def initialize observer, pool_size: 3, logger: Aggredator::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy, message_fallback_policy: MessageFallbackPolicies::Reject.new(logger: Aggredator::App.logger)
       @observer = observer
       @pool_size = pool_size
       logger = logger.respond_to?(:tagged) ? logger : ActiveSupport::TaggedLogging.new(logger)
@@ -47,6 +49,7 @@ module Aggredator
       @middlewares = []
       @pool_factory = pool_factory
       @stream_strategy_class = stream_strategy
+      @message_fallback_policy = message_fallback_policy
     end
 
     def register_consumer(consumer)
@@ -132,10 +135,7 @@ module Aggredator
       # SKIP DEBUG LOGGING
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
-      message.consumer.nack(message, error: e)
-      logger.error "Exception info: #{e.inspect}"
-      logger.debug e.backtrace
-      logger.error "Exception on processing message with delivery_info = #{format_di(message&.delivery_info).inspect} headers = #{message.headers.inspect}"
+      @message_fallback_policy.call(e, message)
     end
 
     def process_message message
