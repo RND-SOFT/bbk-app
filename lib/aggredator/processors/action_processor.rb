@@ -5,6 +5,11 @@ module Aggredator
         [:meta, Aggredator::Api::V1::ActionRequest.meta_match_rule]
       end
 
+      def initialize(*args, supress_exception: true, **kwargs)
+        super
+        @supress_exception = supress_exception
+      end
+
       # examples:
       # Processor instance MUST respond_to? :call
       #
@@ -67,6 +72,8 @@ module Aggredator
 
         results
       rescue StandardError => e
+        raise unless @supress_exception
+
         error "Exception: #{e.inspect}"
         error e.backtrace.join("\n")
         ActiveSupport::Notifications.instrument 'action_processor.exception', action: current_action,
