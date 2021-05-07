@@ -109,7 +109,7 @@ RSpec.describe Aggredator::Dispatcher do
       expect(ActiveSupport::Notifications).to receive(:instrument).with('dispatcher.exception', msg: incoming,
                                                                                                 exception: error)
 
-      expect { subject.send(:process, incoming) }.to raise_error(RuntimeError)
+      subject.send(:process, incoming)
     end
   end
 

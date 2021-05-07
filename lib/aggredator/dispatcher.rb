@@ -27,7 +27,7 @@ module Aggredator
   end 
 
   class Dispatcher
-    attr_accessor :supress_exception, :message_fallback_policy
+    attr_accessor :force_quit, :message_fallback_policy
     attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
     ANSWER_DOMAIN = 'answer'
@@ -52,7 +52,7 @@ module Aggredator
       @pool_factory = pool_factory
       @stream_strategy_class = stream_strategy
       @message_fallback_policy = message_fallback_policy
-      @supress_exception = true
+      @force_quit = false
     end
 
     def register_consumer(consumer)
@@ -80,7 +80,6 @@ module Aggredator
         rescue => e
           logger.fatal "E[#{@stream_strategy_class}]: #{e}"
           logger.fatal "E[#{@stream_strategy_class}]: #{e.backtrace.join("\n")}"
-          raise unless supress_exception
         end
       end
     end
@@ -140,7 +139,7 @@ module Aggredator
     rescue StandardError => e
       ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
       @message_fallback_policy.call(e, message)
-      raise
+      close if force_quit
     end
 
     def process_message message
@@ -191,6 +190,7 @@ module Aggredator
         ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected', msg: incoming, message: error.inspect
         logger.error "[Message#{message_id}] Publish failed: #{error.inspect}"
         @message_fallback_policy.call(error, incoming)
+        close if force_quit
       rescue StandardError => e
         STDERR.puts e.backtrace
         STDERR.puts "[CRITICAL] #{self.class} [#{Process.pid}] failure exiting: #{e.inspect}"
