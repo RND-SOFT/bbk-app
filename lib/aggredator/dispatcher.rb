@@ -27,7 +27,7 @@ module Aggredator
   end 
 
   class Dispatcher
-    attr_accessor :supress_exception
+    attr_accessor :supress_exception, :message_fallback_policy
     attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
     ANSWER_DOMAIN = 'answer'
