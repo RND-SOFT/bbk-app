@@ -8,7 +8,8 @@ module Aggredator
         return results if in_meta.blank?
 
         results&.each do |res|
-          res.payload[:metadata] = res.payload.fetch(:metadata, {}).reverse_merge(in_meta).except('request_meta')
+          out_msg = res.message
+          out_msg.payload[:metadata] = out_msg.payload.fetch(:metadata, {}).reverse_merge(in_meta).except('request_meta')
         end
       end
 
