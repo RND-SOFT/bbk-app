@@ -6,7 +6,7 @@ module Aggredator
       attr_accessor :service_name
 
       def self.rule
-        [:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule]
+        [:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule[:headers]]
       end
 
       def self.action

@@ -6,7 +6,7 @@ module Aggredator
       end
 
       def self.rule
-        [:meta, Aggredator::Api::V1::Pong.meta_match_rule]
+        [:meta, Aggredator::Api::V1::Pong.meta_match_rule[:headers]]
       end
 
       def process(*); end

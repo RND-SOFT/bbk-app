@@ -6,7 +6,7 @@ RSpec.describe Aggredator::Processors::ExchangeLogsProcessor do
   subject { described_class.new service_name }
 
   it 'check rule' do
-    expect(described_class.rule).to match([:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule])
+    expect(described_class.rule).to match([:meta, Aggredator::Api::V1::Actions::ExchangeLogRequest.meta_match_rule[:headers]])
   end
 
   it 'check action' do

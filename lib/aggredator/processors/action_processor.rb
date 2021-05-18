@@ -2,7 +2,7 @@ module Aggredator
   module Processors
     class ActionProcessor < Base
       def self.rule
-        [:meta, Aggredator::Api::V1::ActionRequest.meta_match_rule]
+        [:meta, Aggredator::Api::V1::ActionRequest.meta_match_rule[:headers]]
       end
 
       def initialize(*args, supress_exception: true, **kwargs)
