@@ -57,7 +57,7 @@ module Aggredator
         end
       end
 
-      keys_deep(result).count == keys_deep(rule).count ? result : nil
+      result.keys.size == rule.keys.size && keys_deep(result).count >= keys_deep(rule).count ? result : nil
     end
   end
 

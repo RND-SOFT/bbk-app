@@ -108,6 +108,12 @@ RSpec.describe Aggredator::Matchers do
         payload: payload.deep_dup,
         rule: { passportSeries: :any, test: { value: :any } },
         result: { passportSeries: '5', test: { value: 1 } }
+      },
+      {
+        metadata: metadata.deep_dup,
+        payload: {request: payload.deep_dup},
+        rule:  { request: { passportSeries: :any, test: :any } },
+        result: { request: { passportSeries: '5', test: { value: 1 } } }
       }
     ]
 
@@ -127,8 +133,8 @@ RSpec.describe Aggredator::Matchers do
 
       it "success case #{i} [#{rule.inspect}]" do
         m = Aggredator::PayloadMatcher.new(rule)
-        expect(m.match({}, payload)).not_to eq nil
-        expect(m.match({}, payload)).to eq result
+        expect(m.match({}, args[:payload])).not_to eq nil
+        expect(m.match({}, args[:payload])).to eq result
       end
     end
 
