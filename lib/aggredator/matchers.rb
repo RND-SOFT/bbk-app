@@ -113,9 +113,9 @@ module Aggredator
     def initialize(*args)
       if args.size == 1
         arg = args[0]
-        hrule = arg[:headers]
-        prule = arg[:payload]
-        drule = arg[:delivery_info]
+        hrule = arg.fetch(:headers, {})
+        prule = arg.fetch(:payload, {})
+        drule = arg.fetch(:delivery_info, {})
       else
         hrule, prule, drule = *args
       end
