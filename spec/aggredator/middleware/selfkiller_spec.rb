@@ -1,6 +1,4 @@
-RSpec.describe Aggredator::Middleware::SelfKiller, integration: true do
-  class TestError < StandardError; end
-
+RSpec.describe Aggredator::Middleware::SelfKiller do
   let(:dispatcher) { Aggredator::Dispatcher.new(ObserverMock.new) }
 
   describe '#call' do
@@ -15,11 +13,13 @@ RSpec.describe Aggredator::Middleware::SelfKiller, integration: true do
       it 'stops after 10 messages and 5 seconds' do
         self_killer = create_middleware
         self_killer.build(double.as_null_object)
-        expect(self_killer.call(message)).to_not eq 'closed'
-        expect{ 10.times { self_killer.call(message) } }.not_to raise_exception(TestError)
+        expect{ self_killer.call(message) }.to_not raise_exception
+        expect{ 10.times { self_killer.call(message) } }.not_to raise_exception
         sleep 1
         expect{ self_killer.call(message) }.to raise_exception(TestError)
       end
     end
   end
 end
+
+class TestError < StandardError; end
