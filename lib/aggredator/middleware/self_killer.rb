@@ -1,15 +1,18 @@
 module Aggredator
   module Middleware
     class SelfKiller
+      SELF_KILLER_LOG_INTERVAL = 300
+
       attr_reader :dispatcher, :count, :threshold, :stop_time
 
       def initialize(dispatcher, delay: 10 * 60, threshold: 10_000)
         @dispatcher = dispatcher
         @threshold = threshold
         @count = 0
-        @stop_time = Time.now + delay
+        @stop_time = Process.clock_gettime(Process::CLOCK_MONOTONIC) + delay
         @stopping = false
         @logger = dispatcher.logger
+        reset_log_timer
       end
 
       def build(app)
@@ -18,6 +21,11 @@ module Aggredator
       end
 
       def call(msg)
+        @count += 1
+        if time_exceed?(@log_timer)
+          @logger.info "[SelfKiller] Threshold status: #{@count}/#{@threshold}, delayed: #{!time_exceed?}"
+          reset_log_timer
+        end
         close_dispatcher if stop?
 
         @app.call(msg)
@@ -25,23 +33,26 @@ module Aggredator
 
       protected
 
-      def stop?
-        !@stopping && threshold_exceed && time_exceed
+      def reset_log_timer
+        @log_timer = Process.clock_gettime(Process::CLOCK_MONOTONIC) + SELF_KILLER_LOG_INTERVAL
       end
 
-      def threshold_exceed
-        @count += 1
+      def stop?
+        !@stopping && threshold_exceed? && time_exceed?
+      end
+
+      def threshold_exceed?
         @count > @threshold
       end
 
-      def time_exceed
-        Time.now > @stop_time
+      def time_exceed?(time = @stop_time)
+        Process.clock_gettime(Process::CLOCK_MONOTONIC) > time
       end
 
       def close_dispatcher
         @stopping = true
-        @logger.warn 'Self killer threshold exceeded, closing dispatcher...'
-        @dispatcher.close
+        @logger.warn '[SelfKiller] Threshold exceeded, closing dispatcher...'
+        Thread.new { @dispatcher.close } # Don't block current call
       end
     end
   end
