@@ -36,11 +36,17 @@ module Aggredator
 
     def run(block: true)
       @watchdog.start if @watchdog.present?
-      queue.subscribe(block: block, manual_ack: true) do |delivery_info, properties, body|
+      @subscription = queue.subscribe(block: false, manual_ack: true) do |delivery_info, properties, body|
         mqmsg = { delivery_info: delivery_info, properties: properties, body: body }
         ActiveSupport::Notifications.instrument 'dispatcher.request', msg: mqmsg, queue: queue do
           process_request(mqmsg)
         end
+      end
+
+      if block
+        # joins current thread with the consumers pool, will block
+        # the current thread for as long as the consumer pool is active
+        client.channel.work_pool.join
       end
     end
 
@@ -98,6 +104,8 @@ module Aggredator
     end
 
     def close
+      @subscription&.cancel
+      client.channel.wait_for_confirms rescue nil
       client.channel.close
     rescue => e
       $logger&.warn "Got exception on dispatcher close: #{e.inspect}"
@@ -169,4 +177,4 @@ module Aggredator
         end
       end
   end
-end
+end        puts "UNBLOCKED !!!"
