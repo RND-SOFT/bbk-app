@@ -1,28 +1,18 @@
 RSpec.describe Aggredator::Middleware::SelfKiller do
-  let(:dispatcher) { Aggredator::Dispatcher.new(ObserverMock.new) }
+  let(:dispatcher) { instance_double(Aggredator::Dispatcher) }
 
   describe '#call' do
-    before do
-      allow(dispatcher).to receive(:close) { @closed = true }
-    end
 
     context 'when delay = 2, threshold = 10' do
-      let(:create_middleware) { described_class.new(dispatcher, delay: 2, threshold: 10) }
+      let(:killer) { described_class.new(dispatcher, delay: 1, threshold: 10).build(double.as_null_object) }
       let(:message) { '{ "text": "test" }' }
 
       it 'stops on call after 10 messages and 2 seconds' do
-        @closed = false
-        self_killer = create_middleware
-        self_killer.build(double.as_null_object)
-        sleep 1
-        self_killer.call(message)
-        expect(@closed).to be false
-        10.times { self_killer.call(message) }
-        expect(@closed).to be false
-        sleep 1
-        self_killer.call(message)
-        sleep 0.5
-        expect(@closed).to be true
+        expect(dispatcher).to receive(:close).once.and_return(false)
+        killer.call(message)
+        sleep 1.1
+        11.times { killer.call(message) }
+        sleep 0.5 # wait for thread termination
       end
     end
   end

@@ -5,13 +5,13 @@ module Aggredator
 
       attr_reader :dispatcher, :count, :threshold, :stop_time
 
-      def initialize(dispatcher, delay: 10 * 60, threshold: 10_000)
+      def initialize(dispatcher, delay: 10 * 60, threshold: 10_000, logger: Logger.new(STDOUT))
         @dispatcher = dispatcher
         @threshold = threshold
         @count = 0
         @stop_time = Process.clock_gettime(Process::CLOCK_MONOTONIC) + delay
         @stopping = false
-        @logger = dispatcher.logger
+        @logger = logger
         reset_log_timer
       end
 
