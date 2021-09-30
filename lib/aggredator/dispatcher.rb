@@ -97,6 +97,12 @@ module Aggredator
       @executor.dispatcher = self
     end
 
+    def close
+      client.channel.close
+    rescue => e
+      $logger&.warn "Got exception on dispatcher close: #{e.inspect}"
+    end
+
     private
 
       def transform_incomming(msg)
