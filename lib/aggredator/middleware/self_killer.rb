@@ -5,7 +5,7 @@ module Aggredator
 
       attr_reader :dispatcher, :count, :threshold, :stop_time
 
-      def initialize(dispatcher, delay: 10 * 60, threshold: 10_000, logger: Logger.new(STDOUT))
+      def initialize(dispatcher, delay: 10 * 60, threshold: 10_000, logger: ::Logger.new(STDOUT))
         @dispatcher = dispatcher
         @threshold = threshold
         @count = 0
