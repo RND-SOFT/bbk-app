@@ -12,6 +12,7 @@ module Aggredator
         @stop_time = Process.clock_gettime(Process::CLOCK_MONOTONIC) + delay
         @stopping = false
         @logger = logger
+        @logger.info "[SelfKiller] Initializing: #{@count}/#{@threshold}"
         reset_log_timer
       end
 
