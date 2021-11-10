@@ -4,7 +4,7 @@ PATH
     aggredator-app (2.1.3)
       activesupport
       aggredator-api (~> 2.0)
-      aggredator-client (~> 2.0)
+      aggredator-client (~> 2.0, >= 2.0.3)
       timeouter
 
 GEM
