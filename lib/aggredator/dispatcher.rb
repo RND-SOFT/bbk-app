@@ -71,6 +71,7 @@ module Aggredator
     def run
       @pool = @pool_factory.call(@pool_size, 10)
       @stream_strategy = @stream_strategy_class.new(@pool, logger: logger)
+      ActiveSupport::Notifications.instrument 'dispatcher.run', dispatcher: self
 
       @stream_strategy.run(consumers) do |msg|
         begin
@@ -92,6 +93,7 @@ module Aggredator
     # 4. остановить потоки
     # 5. остановить паблишеры
     def close timeout = 5
+      ActiveSupport::Notifications.instrument 'dispatcher.close', dispatcher: self
       consumers.each do |cons|
         begin
           cons.stop
