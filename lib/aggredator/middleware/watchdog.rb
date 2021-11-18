@@ -24,6 +24,7 @@ module Aggredator
       end
 
       def start
+        touch
         start_ping
         start_watch
         self
