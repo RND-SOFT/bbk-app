@@ -1,6 +1,5 @@
 RSpec.describe Aggredator::Middleware::MetadataCopier do
 
-  subject { described_class.new app }
   let(:in_meta) { (2 + rand(5)).times.map {[SecureRandom.hex] * 2}.to_h }
   let(:out_meta) { (2 + rand(5)).times.map {[SecureRandom.hex] * 2}.to_h } 
 

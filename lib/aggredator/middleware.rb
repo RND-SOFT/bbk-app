@@ -4,6 +4,7 @@ require 'aggredator/middleware/legacy'
 require 'aggredator/middleware/api_version'
 require 'aggredator/middleware/metadata_copier'
 require 'aggredator/middleware/self_killer'
+require 'aggredator/middleware/from_block'
 
 module Aggredator
   module Middleware
