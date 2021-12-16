@@ -3,11 +3,6 @@ RSpec.describe Aggredator::Middleware::ApiVersion do
   subject { described_class.new default_api }
 
   let(:msg) { OpenStruct.new headers: {} }
-  let(:app) do
-    proc do
-      yield if block_given?
-    end
-  end
 
   it 'set not configured api flag' do
     subject.build(proc do |msg|
