@@ -131,7 +131,7 @@ module Aggredator
         results = []
         begin
           is_unknown = @observer.instance_variable_get('@default') == processor
-          ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, unknown: is_unknown do
+          ActiveSupport::Notifications.instrument 'dispatcher.request.process', msg: mqmsg, match: matched, unknown: is_unknown, processor: processor do
             watchdog&.touch
             processor.call(incmsg, results: results)
           end
