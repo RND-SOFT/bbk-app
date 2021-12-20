@@ -22,7 +22,7 @@ module Aggredator
       #
       # If Processor instance respond_to? :action
       # register Processor.new
-      def register(*args, &block)
+      def register(*args, **kwargs, &block)
         @actions ||= {}
         action, callable = nil
 
@@ -37,7 +37,7 @@ module Aggredator
                  end
 
         callable = if args.first.is_a?(Class)
-                     Aggredator::Factory.new(*args)
+                     Aggredator::Factory.new(*args, **kwargs)
                    elsif args.first.respond_to?(:call)
                      args.first
                    else

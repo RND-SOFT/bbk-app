@@ -4,7 +4,7 @@ RSpec.describe Aggredator::Factory do
 
     attr_reader :args
 
-    def initialize(*args)
+    def initialize(*args, **kwargs)
       @args = args
     end
 
@@ -28,7 +28,7 @@ RSpec.describe Aggredator::Factory do
   end
 
   it 'call' do
-    expect_any_instance_of(Test).to receive(:call).with(*method_params).and_call_original
+    expect_any_instance_of(Test).to receive(:call).with(*method_params, any_args).and_call_original
     result = subject.call(*method_params)
     expect(result).to eq Test::RESULT_VALUE
   end

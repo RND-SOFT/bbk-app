@@ -13,23 +13,27 @@ module Aggredator
 
     # регистрация обработчика
     # тип матчера, парметры матчера, Обработчик | Класс обработчика, [аргументы обработчика]
-    def register(*args, &block)
+    def register(*args, **kwargs, &block)
       type, rule, callable = nil
 
-      args.push block if block_given?
       if args.first.respond_to?(:rule)
         type, *rule = args.first.rule
       elsif args.first.is_a?(Symbol) || args.first.is_a?(String)
         type = args.shift.to_sym
-        raise "rule is not a Hash: #{args.inspect}" unless args.first.is_a?(Hash)
-
         rule = args.shift
+        if rule.nil?
+          $logger&.warn("Not found processor rule in positional arguments. Use keyword arguments #{kwargs} as rule")
+          rule = kwargs
+          kwargs = {}
+        end
+        raise "rule is not a Hash: #{args.inspect}" unless rule.is_a?(Hash)
       else
         raise "type and rule or method :rule missing: #{args.inspect}"
       end
+      args.push block if block_given?
 
       callable = if args.first.is_a?(Class)
-                   Aggredator::Factory.new(*args)
+                   Aggredator::Factory.new(*args, **kwargs)
                  elsif args.first.respond_to?(:call)
                    args.first
                  else
