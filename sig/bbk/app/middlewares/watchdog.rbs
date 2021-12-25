@@ -1,0 +1,40 @@
+module BBK
+  module App
+    module Middlewares
+      class Watchdog
+
+        interface _App
+          def call: (untyped) -> untyped
+        end
+
+        interface _MessageFactory
+          def build: (String) -> BBK::App::Dispatcher::_Message
+        end
+
+        attr_reader publisher: untyped
+        attr_reader route: String
+        attr_reader message_factory: _MessageFactory
+        attr_reader reply_to: String
+        attr_reader delay: Integer
+        attr_reader timeout: Integer
+        attr_reader watched_delay: Integer
+        attr_reader pinger_thread: Thread?
+        attr_reader watched_thread: Thread?
+
+        def initialize: (untyped, String, _MessageFactory, String, ?delay: Integer, ?timeout: Integer, ?watcher_delay: Integer) -> void
+
+        def build: (_App) -> void
+        def call:(BBK::App::Dispatcher::_Message) -> Array[BBK::App::Dispatcher::Result]
+        def start: () -> void
+        def stop: () -> void
+        
+        private
+
+        def start_ping: () -> void
+        def start_watch: () -> void
+        def touch: () -> void
+
+      end
+    end
+  end
+end

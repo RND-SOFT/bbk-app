@@ -1,0 +1,28 @@
+version: "2.3"
+
+services:
+  test-2.5:
+    build:
+      context: .
+      args:
+        RUBY_VERSION: 2.5
+        BUNDLE_NEXUS__RNDS__LOCAL:
+    image: bbk-app-tests:2.5
+    working_dir: /home/app
+    
+  test-3.0:
+    build:
+      context: .
+      args:
+        RUBY_VERSION: 3.0
+        BUNDLE_NEXUS__RNDS__LOCAL: 
+    image: bbk-app-tests:3.0
+    environment:
+      - RBS_TEST_TARGET
+      - RBS_TEST_OPT
+      - RUBYOPT
+    working_dir: /home/app
+    
+    
+
+

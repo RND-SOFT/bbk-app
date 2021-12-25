@@ -1,4 +1,5 @@
 class ObserverMock
+
   attr_accessor :errors, :msg
 
   def raise_error(str)
@@ -10,16 +11,18 @@ class ObserverMock
   end
 
   def match(*_args)
-    [{}, lambda { |msg, results:|
+    [{}, lambda {|msg, results:|
       @msg = msg
       if @error
         raise @error
       else
-        results << (@result || Aggredator::Dispatcher::Result.new(
-          Aggredator::Dispatcher::Route.new('mq://main@key'),
+        results << (@result || BBK::App::Dispatcher::Result.new(
+          BBK::App::Dispatcher::Route.new('mq://main@key'),
           @msg
         ))
       end
     }]
   end
+
 end
+

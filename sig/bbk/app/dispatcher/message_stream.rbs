@@ -1,0 +1,15 @@
+module BBK
+  module App
+    class Dispatcher
+      class MessageStream
+
+        def initialize: (?size: Integer) -> void
+        def push: (_IncomingMessage) -> void
+        def each: () -> Enumerator[_IncomingMessage|Symbol, void]
+                      | {(_IncomingMessage) -> void} -> void
+        def close: () -> void        
+
+      end
+    end
+  end
+end

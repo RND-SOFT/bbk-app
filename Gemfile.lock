@@ -1,19 +1,15 @@
 PATH
   remote: .
   specs:
-    aggredator-app (2.1.3)
+    bbk-app (1.0.0)
       activesupport
-      aggredator-api (~> 2.0)
-      aggredator-client (~> 2.0, >= 2.0.3)
+      bbk-utils (= 1.0.1.40000)
       timeouter
 
 GEM
   remote: https://rubygems.org/
   remote: http://nexus.rnds.local/repository/internal/
   specs:
-    active_interaction (4.0.6)
-      activemodel (>= 5, < 7)
-      activesupport (>= 5, < 7)
     activemodel (6.0.3.2)
       activesupport (= 6.0.3.2)
     activerecord (6.0.3.2)
@@ -25,26 +21,18 @@ GEM
       minitest (~> 5.1)
       tzinfo (~> 1.1)
       zeitwerk (~> 2.2, >= 2.2.2)
-    addressable (2.7.0)
+    addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
-    aggredator-api (2.5.0.61391)
-      active_interaction
-      activesupport
-      builder
-      terminal-table
-    aggredator-client (2.0.3.67217)
-      activesupport
-      aggredator-api (~> 2.0)
-      bunny (~> 2.19.0)
-      concurrent-ruby (~> 1.1.5)
     amq-protocol (2.3.2)
     ansi (1.5.0)
-    ast (2.4.1)
+    ast (2.4.2)
     axiom-types (0.1.1)
       descendants_tracker (~> 0.0.4)
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
-    builder (3.2.4)
+    bbk-utils (1.0.1.40000)
+      activesupport (~> 6.0)
+      russian
     bunny (2.19.0)
       amq-protocol (~> 2.3, >= 2.3.1)
       sorted_set (~> 1, >= 1.0.2)
@@ -79,18 +67,19 @@ GEM
     launchy (2.5.0)
       addressable (~> 2.7)
     minitest (5.15.0)
-    parser (2.7.1.4)
+    parser (2.7.2.0)
       ast (~> 2.4.1)
     path_expander (1.1.0)
-    psych (3.1.0)
-    public_suffix (4.0.5)
+    powerpack (0.0.9)
+    psych (3.3.2)
+    public_suffix (4.0.6)
     rainbow (3.0.0)
     rake (12.3.3)
     rbtree (0.4.4)
-    reek (6.0.1)
+    reek (6.0.2)
       kwalify (~> 0.7.0)
       parser (>= 2.5.0.0, < 2.8, != 2.5.1.1)
-      psych (~> 3.1.0)
+      psych (~> 3.1)
       rainbow (>= 2.0, < 4.0)
     rspec (3.10.0)
       rspec-core (~> 3.10.0)
@@ -107,9 +96,13 @@ GEM
     rspec-support (3.10.3)
     rspec_junit_formatter (0.4.1)
       rspec-core (>= 2, < 4, != 2.12.0)
+    rubocop (0.16.0)
+      parser (~> 2.1)
+      powerpack (~> 0.0.6)
+      rainbow (>= 1.1.4)
     ruby_parser (3.18.1)
       sexp_processor (~> 4.16)
-    rubycritic (4.5.1)
+    rubycritic (4.6.1)
       flay (~> 2.8)
       flog (~> 4.4)
       launchy (>= 2.0.0)
@@ -120,6 +113,8 @@ GEM
       simplecov (>= 0.17.0)
       tty-which (~> 0.4.0)
       virtus (~> 1.0)
+    russian (0.6.0)
+      i18n (>= 0.5.0)
     set (1.0.2)
     sexp_processor (4.16.0)
     simplecov (0.21.2)
@@ -149,14 +144,14 @@ GEM
       coercible (~> 1.0)
       descendants_tracker (~> 0.0, >= 0.0.3)
       equalizer (~> 0.0, >= 0.0.9)
-    zeitwerk (2.5.1)
+    zeitwerk (2.5.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   activerecord (~> 6.0)
-  aggredator-app!
+  bbk-app!
   bundler (~> 2.0)
   bunny-mock (~> 1.7.0)
   byebug
@@ -165,6 +160,7 @@ DEPENDENCIES
   rake (~> 12.0)
   rspec (~> 3.0)
   rspec_junit_formatter
+  rubocop
   rubycritic
   simplecov
   simplecov-console

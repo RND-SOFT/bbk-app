@@ -2,7 +2,7 @@ require 'active_record'
 
 RSpec.configure do |config|
   db_config = {
-    adapter: :sqlite3,
+    adapter:  :sqlite3,
     database: ':memory:'
   }
 
@@ -13,3 +13,4 @@ RSpec.configure do |config|
                                        ActiveRecord::Base.connection.schema_migration).migrate
   end
 end
+

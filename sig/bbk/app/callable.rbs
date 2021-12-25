@@ -1,0 +1,3 @@
+interface _Callable
+  def call: (*untyped, **untyped) -> untyped
+end
