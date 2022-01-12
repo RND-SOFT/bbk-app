@@ -17,8 +17,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'activesupport'
   spec.add_runtime_dependency 'timeouter'
-  # Специальная версия на nexus, чтобы подтянуть sig...
-  spec.add_runtime_dependency 'bbk-utils', '= 1.0.1.40000'
+  spec.add_runtime_dependency 'bbk-utils', '> 1.0.1'
 
   spec.add_development_dependency 'activerecord', '~> 6.0'
   spec.add_development_dependency 'bundler', '~> 2.0'

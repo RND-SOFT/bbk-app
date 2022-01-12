@@ -1,6 +1,7 @@
-source 'https://rubygems.org'
-source 'http://nexus.rnds.local/repository/internal'
+# frozen_string_literal: true
 
+source 'https://rubygems.org'
 
 # Specify your gem's dependencies in bbk-app.gemspec
 gemspec
+
