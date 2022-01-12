@@ -1,4 +1,5 @@
 class CreateServiceRequests < ActiveRecord::Migration[5.1]
+
   def change
     create_table :service_requests do |t|
       t.string :ticket_id, null: false, unique: true
@@ -14,4 +15,6 @@ class CreateServiceRequests < ActiveRecord::Migration[5.1]
       t.timestamps
     end
   end
+
 end
+

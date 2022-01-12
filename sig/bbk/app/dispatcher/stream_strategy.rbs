@@ -1,0 +1,13 @@
+module BBK
+  module App
+    class Dispatcher
+      interface _StreamStrategy
+        def run: (Array[_Consumer]) {(_Message) -> void} -> void
+      end
+
+      class StreamStrategyClass
+        def new: (*untyped, **untyped) -> _StreamStrategy
+      end
+    end
+  end
+end

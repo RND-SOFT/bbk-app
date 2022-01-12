@@ -1,0 +1,18 @@
+module BBK
+  module App
+    class Dispatcher
+      class Route
+        attr_reader uri: ::URI::Generic
+        attr_reader scheme: String?
+        attr_reader domain: String?
+        attr_reader routing_key: String
+
+        def initialize: (String|::URI::Generic) -> void 
+
+        def to_s: () -> String
+        def ==: (untyped) -> bool
+
+      end
+    end
+  end
+end

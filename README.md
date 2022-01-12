@@ -1,25 +1,38 @@
-# Aggredator::App
+# BBK::App
 
-Гем, в котором собраны классы для написания конечных сервисов. В данный момент разрабатывается и внедряется версия API 2.0
-
-Старая версия доступна [тут](https://br.rnds.pro/aggredator/gems/app/-/tree/v1)
+Classes for building services based on BBK stack.
 
 ## Installation
 
-Гем расположен в **ПРИВАТНОМ** репозитории `http://nexus.rnds.local/repository/internal`
-
-Это надо добавить в Gemfile:
+Adding to a gem:
 
 ```ruby
-source 'http://nexus.rnds.local/repository/internal'
+# my-cool-gem.gemspec
 
-gem 'aggredator-app'
+Gem::Specification.new do |spec|
+  # ...
+  spec.add_dependency "bbk-app", "~> 1.0.0"
+  # ...
+end
 ```
 
-Затем:
-  $ bundle
+Or adding to your project:
 
-Или поставить в консоли:
-  $ gem sources --add http://nexus.rnds.local/repository/internal
-  $ gem install aggredator-app
+```ruby
+# Gemfile
 
+gem "bbk-app", "~> 1.0.0"
+```
+
+### Supported Ruby versions
+
+* Ruby (MRI) >= 2.5.0
+
+### Tested Ruby versions
+
+* Ruby (MRI) 2.5.x
+* Ruby (MRI) 3.0.x
+
+## License
+
+The gem is available as open source under the terms of the MIT License.

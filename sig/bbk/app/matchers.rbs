@@ -1,0 +1,12 @@
+module BBK
+  module App
+    module Matchers
+
+      interface _Matcher
+        def match: (Hash[String|Symbol, untyped], Hash[String|Symbol, untyped], Hash[String|Symbol, untyped], *untyped) -> boolish
+      end
+
+      def self.create: (Symbol|String, *untyped) -> _Matcher
+    end
+  end
+end

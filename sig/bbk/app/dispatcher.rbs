@@ -1,0 +1,62 @@
+module BBK
+  module App
+    class Dispatcher
+
+      ANSWER_DOMAIN: 'answer'
+
+      interface _Consumer
+        def stop: () -> void
+      end
+
+      interface _Publisher
+        def publish: (Result) -> untyped # Concurrent::Promises::ResolvableFuture
+        def close: () -> void
+      end
+
+      interface _Middleware
+        def call: (_Message) -> Array[Result]
+      end
+
+      interface _MiddlewareClass
+        def new: (untyped) -> _Middleware
+      end
+
+      interface _MiddlewareBuilder
+        def build: (untyped) -> _Middleware
+      end
+
+      interface _ProcessorsStack
+        def call: (_Message) -> Array[Result]
+      end
+
+      interface _PoolFactory
+        def call: (Integer pool_size, Integer queue_size) -> untyped
+      end
+
+      type logger = BBK::Utils::_ProxyObject|_Logger
+
+      attr_accessor force_quit: bool
+      attr_reader consumers: Array[_Consumer]
+      attr_reader publishers: Array[_Publisher]
+      attr_reader middlewares: Array[_MiddlewareBuilder|_MiddlewareClass]
+      attr_reader logger: logger
+
+      def initialize: (Handler, ?pool_size: Integer, ?logger: logger, ?pool_factory: _PoolFactory, ?stream_strategy: StreamStrategyClass) -> void
+      def register_consumer: (_Consumer) -> void
+      def register_publisher: (_Publisher) -> void
+      def register_middleware: (_MiddlewareBuilder|_MiddlewareClass) -> void
+      def run: () -> void
+      def close: (?Integer time) -> void
+
+      private
+
+      def process: (_Message) -> void
+      def process_message: (_Message) -> Array[Result]
+      def find_processor: (_Message) -> [untyped, _Processor]
+      def build_processing_stack: () -> _ProcessorsStack
+      def send_results: (_Message, Array[untyped]) -> void
+      def publish_result: (Result) -> untyped
+
+    end
+  end
+end

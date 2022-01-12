@@ -1,0 +1,21 @@
+module BBK
+  module App
+    class Factory
+
+      interface _ArgFactory
+        def new: (*untyped, **untyped) -> untyped
+      end
+
+      attr_accessor klass: _ArgFactory
+      attr_accessor instanceargs: Array[untyped]
+      attr_accessor instancekwargs: Hash[Symbol, untyped]
+    
+      def initialize: (_ArgFactory, *untyped) -> void
+      
+      def create: () -> _Callable
+
+      def call: (*untyped) -> void
+
+    end
+  end
+end
