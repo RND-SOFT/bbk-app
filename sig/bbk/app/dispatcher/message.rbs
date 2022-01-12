@@ -1,0 +1,33 @@
+module BBK
+  module App
+    class Dispatcher
+      interface _Message
+        def headers: () -> Hash[String|Symbol, untyped]
+        def payload: () -> Hash[untyped, untyped]?
+      end
+
+      interface _Mapping
+        def []: (untyped) -> untyped
+        def []=: (untyped, untyped) -> untyped
+      end
+
+      interface _IncomingMessage
+        include _Message
+        def delivery_info: () -> untyped
+        def body: () -> String
+
+        def ack: (*untyped, ?answer: Result?, **untyped) -> void
+        def nack: (*untyped, ?error: untyped, **untyped) -> void
+        def message_id: () -> String
+      end
+
+
+      class Message
+        include _IncomingMessage
+
+        def initialize: (_Consumer, untyped?, Hash[String|Symbol, untyped], untyped, *untyped) -> void
+
+      end
+    end
+  end
+end

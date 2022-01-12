@@ -1,0 +1,12 @@
+module BBK
+  module App
+    class Dispatcher
+      class Result
+        attr_accessor route: Route
+        attr_accessor message: _Message
+        
+        def initialize: (String|Route route, _Message message) -> void
+      end
+    end
+  end
+end

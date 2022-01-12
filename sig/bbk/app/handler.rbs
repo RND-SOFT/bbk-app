@@ -1,0 +1,19 @@
+module BBK
+  module App
+    class Handler
+      @handlers: Hash[BBK::App::Matchers::_Matcher, _Callable]
+      @default: untyped
+
+      type hashKey = String | Symbol
+
+      def initialize: () ?{() -> void} -> void
+
+      def register: (*untyped, **untyped) ?{() -> void} -> void
+
+      def default: () {()->void} -> void
+
+      def match: (Hash[hashKey, untyped] metadata, Hash[hashKey, untyped] payload, Hash[hashKey, untyped] delivery_info) -> Array[untyped]?
+
+    end
+  end
+end

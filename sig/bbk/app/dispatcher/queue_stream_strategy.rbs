@@ -1,0 +1,12 @@
+module BBK
+  module App
+    class Dispatcher
+      class QueueStreamStrategy
+        include _StreamStrategy
+
+        def initialize: (untyped, logger: _Logger|BBK::Utils::ProxyLogger) -> void
+ 
+      end
+    end
+  end
+end

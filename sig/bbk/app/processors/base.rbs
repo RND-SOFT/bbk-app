@@ -1,0 +1,21 @@
+module BBK
+  module App
+
+    interface _Processor
+      def call: (BBK::App::Dispatcher::_Message message, ?results: Array[BBK::App::Dispatcher::Result]) -> void
+    end
+
+    module Processors
+      class Base
+        
+        include _Processor
+        type processorLogger = _Logger | BBK::Utils::ProxyLogger 
+
+        attr_reader logger: processorLogger
+        def initialize: (*untyped, ?logger: processorLogger, **untyped) -> void
+        def rule: () -> untyped
+        def process: (BBK::App::Dispatcher::_Message message, ?results: Array[BBK::App::Dispatcher::Result]) -> void  
+      end
+    end
+  end
+end
