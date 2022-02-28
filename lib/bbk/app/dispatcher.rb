@@ -125,6 +125,7 @@ module BBK
           logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
           send_results(message, results).value
         rescue StandardError => e
+          logger.error "Failed processing message: #{e.inspect}"
           ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
           message.nack(error: e)
           close if force_quit
