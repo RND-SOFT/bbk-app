@@ -59,20 +59,20 @@
   diagnostics:
   - range:
       start:
-        line: 156
+        line: 158
         character: 20
       end:
-        line: 156
+        line: 158
         character: 82
     severity: ERROR
     message: 'UnexpectedError: undefined method `free_variables'' for nil:NilClass'
     code: Ruby::UnexpectedError
   - range:
       start:
-        line: 160
+        line: 162
         character: 45
       end:
-        line: 160
+        line: 162
         character: 48
     severity: ERROR
     message: |-
@@ -81,10 +81,10 @@
     code: Ruby::ArgumentTypeMismatch
   - range:
       start:
-        line: 174
+        line: 176
         character: 43
       end:
-        line: 176
+        line: 178
         character: 46
     severity: ERROR
     message: Unsupported splat node occurrence

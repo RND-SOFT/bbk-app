@@ -140,6 +140,7 @@ module BBK
               processor.call(message, results: results)
             end
           rescue StandardError => e
+            logger.error "Failed processing message in processor: #{e.inspect}"
             if processor.respond_to?(:on_error)
               results = processor.on_error(message, e)
             else
