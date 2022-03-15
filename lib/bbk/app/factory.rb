@@ -13,7 +13,11 @@ module BBK
       end
 
       def create
-        klass.new(*instanceargs, **instancekwargs)
+        if RUBY_VERSION < '2.7' && instancekwargs.empty?
+          klass.new(*instanceargs)
+        else
+          klass.new(*instanceargs, **instancekwargs)
+        end
       end
 
       def call(*args, **kwargs)
