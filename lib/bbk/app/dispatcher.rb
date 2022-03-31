@@ -160,7 +160,7 @@ module BBK
 
         def build_processing_stack
           stack = proc{|msg| process_message(msg) }
-          middlewares.reduce(stack) do |stack, middleware|
+          middlewares.reverse.reduce(stack) do |stack, middleware|
             if middleware.respond_to?(:build)
               middleware.build(stack)
             else
