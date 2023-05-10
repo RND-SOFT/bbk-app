@@ -116,12 +116,16 @@ module BBK
         end
       end
 
+      def execute_message(message)
+        build_processing_stack.call(message).select do |r|
+          r.is_a?(BBK::App::Dispatcher::Result)
+        end
+      end
+
       protected
 
         def process(message)
-          results = build_processing_stack.call(message).select do |e|
-            e.is_a? BBK::App::Dispatcher::Result
-          end
+          results = execute_message(message)
           logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
           send_results(message, results).value
         rescue StandardError => e

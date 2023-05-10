@@ -3,15 +3,15 @@
   diagnostics:
   - range:
       start:
-        line: 20
-        character: 15
+        line: 8
+        character: 71
       end:
-        line: 20
-        character: 45
+        line: 8
+        character: 80
     severity: ERROR
-    message: 'Method parameters are incompatible with declaration `(*untyped, ?answer:
-      (::BBK::App::Dispatcher::Result | nil), **untyped) -> void`'
-    code: Ruby::MethodArityMismatch
+    message: The method parameter has different kind from the declaration `(::BBK::App::Dispatcher::_Consumer,
+      untyped, ::Hash[(::String | ::Symbol), untyped], untyped, *untyped) -> void`
+    code: Ruby::DifferentMethodParameterKind
   - range:
       start:
         line: 21
@@ -22,17 +22,6 @@
     severity: ERROR
     message: Unsupported splat node occurrence
     code: Ruby::UnsupportedSyntax
-  - range:
-      start:
-        line: 24
-        character: 16
-      end:
-        line: 24
-        character: 45
-    severity: ERROR
-    message: 'Method parameters are incompatible with declaration `(*untyped, ?error:
-      untyped, **untyped) -> void`'
-    code: Ruby::MethodArityMismatch
   - range:
       start:
         line: 25
@@ -59,20 +48,28 @@
   diagnostics:
   - range:
       start:
-        line: 158
-        character: 20
+        line: 37
+        character: 103
       end:
-        line: 158
-        character: 82
+        line: 37
+        character: 139
     severity: ERROR
-    message: 'UnexpectedError: undefined method `free_variables'' for nil:NilClass'
-    code: Ruby::UnexpectedError
+    message: |-
+      Cannot assign a value of type `singleton(::BBK::App::Dispatcher::QueueStreamStrategy)` to an expression of type `::BBK::App::Dispatcher::StreamStrategyClass`
+        singleton(::BBK::App::Dispatcher::QueueStreamStrategy) <: ::BBK::App::Dispatcher::StreamStrategyClass
+          singleton(::Object) <: ::BBK::App::Dispatcher::StreamStrategyClass
+            singleton(::BasicObject) <: ::BBK::App::Dispatcher::StreamStrategyClass
+              ::Class <: ::BBK::App::Dispatcher::StreamStrategyClass
+                ::Module <: ::BBK::App::Dispatcher::StreamStrategyClass
+                  ::Object <: ::BBK::App::Dispatcher::StreamStrategyClass
+                    ::BasicObject <: ::BBK::App::Dispatcher::StreamStrategyClass
+    code: Ruby::IncompatibleAssignment
   - range:
       start:
-        line: 162
+        line: 166
         character: 45
       end:
-        line: 162
+        line: 166
         character: 48
     severity: ERROR
     message: |-
@@ -81,39 +78,38 @@
     code: Ruby::ArgumentTypeMismatch
   - range:
       start:
-        line: 176
+        line: 180
         character: 43
       end:
-        line: 178
+        line: 182
         character: 46
     severity: ERROR
     message: Unsupported splat node occurrence
     code: Ruby::UnsupportedSyntax
-- file: lib/bbk/app/handler.rb
+- file: lib/bbk/app/factory.rb
   diagnostics:
   - range:
       start:
-        line: 18
-        character: 18
+        line: 9
+        character: 35
       end:
-        line: 18
+        line: 9
         character: 43
     severity: ERROR
-    message: Method parameters are incompatible with declaration `(*untyped, **untyped)
-      ?{ () -> void } -> void`
-    code: Ruby::MethodArityMismatch
-- file: lib/bbk/app/matchers/base.rb
-  diagnostics:
+    message: The method parameter has different kind from the declaration `(::BBK::App::Factory::_ArgFactory,
+      *untyped) -> void`
+    code: Ruby::DifferentMethodParameterKind
   - range:
       start:
-        line: 35
-        character: 12
+        line: 23
+        character: 22
       end:
-        line: 38
-        character: 44
+        line: 23
+        character: 30
     severity: ERROR
-    message: 'UnexpectedError: undefined method `free_variables'' for nil:NilClass'
-    code: Ruby::UnexpectedError
+    message: The method parameter has different kind from the declaration `(*untyped)
+      -> void`
+    code: Ruby::DifferentMethodParameterKind
 - file: lib/bbk/app/matchers.rb
   diagnostics:
   - range:
@@ -126,19 +122,26 @@
     severity: ERROR
     message: Unsupported splat node occurrence
     code: Ruby::UnsupportedSyntax
-- file: lib/bbk/app/processors/base.rb
+- file: lib/bbk/app/middlewares/self_killer.rb
   diagnostics:
   - range:
       start:
-        line: 10
-        character: 22
+        line: 52
+        character: 27
       end:
-        line: 10
-        character: 61
+        line: 52
+        character: 44
     severity: ERROR
-    message: 'Method parameters are incompatible with declaration `(*untyped, ?logger:
-      ::BBK::App::Processors::Base::processorLogger, **untyped) -> void`'
-    code: Ruby::MethodArityMismatch
+    message: |-
+      Cannot assign a value of type `(::Integer | ::Float)` to an expression of type `::Float`
+        (::Integer | ::Float) <: ::Float
+          ::Integer <: ::Float
+            ::Numeric <: ::Float
+              ::Object <: ::Float
+                ::BasicObject <: ::Float
+    code: Ruby::IncompatibleAssignment
+- file: lib/bbk/app/processors/base.rb
+  diagnostics:
   - range:
       start:
         line: 38
