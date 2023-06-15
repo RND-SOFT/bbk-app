@@ -13,6 +13,14 @@ module BBK
           @message = message
         end
 
+        def deconstruct
+          [route.to_s, message]
+        end
+
+        def deconstruct_keys(_keys)
+          {route: route.to_s, message: message}
+        end
+
       end
     end
   end
