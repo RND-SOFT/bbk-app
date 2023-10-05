@@ -178,15 +178,15 @@ module BBK
 
           answer = results.find {|msg| msg.route.domain == ANSWER_DOMAIN }
           Concurrent::Promises.zip_futures(*results.map do |result|
-                                             publish_result(result)
-                                           end).then do |_successes|
-            incoming.ack(answer: answer)
+                                             publish_result(incoming, result)
+                                           end).then do |successes|
+            incoming.ack(answer: answer, successes: successes)
           end.rescue do |*errors|
             error = errors.compact.first
             ActiveSupport::Notifications.instrument 'dispatcher.request.result_rejected',
                                                     msg: incoming, message: error.inspect
             logger.error "[Message#{message_id}] Publish failed: #{error.inspect}"
-            incoming.nack(error: error)
+            incoming.nack(error: error, errors: errors)
             close if force_quit
           rescue StandardError => e
             warn e.backtrace
@@ -199,14 +199,14 @@ module BBK
         end
 
         # @return [Concurrent::Promises::ResolvableFuture]
-        def publish_result(result)
+        def publish_result(incoming, result)
           route = result.route
           logger.debug "Publish result to #{route} ..."
           publisher = publishers.find {|pub| pub.protocols.include?(route.scheme) }
           raise "Not found publisher for scheme #{route.scheme}" if publisher.nil?
 
           # return Concurrent::Promises.resolvable_future
-          publisher.publish(result)
+          publisher.publish(incoming, result)
         end
 
     end
