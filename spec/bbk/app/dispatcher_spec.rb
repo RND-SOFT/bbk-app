@@ -281,7 +281,7 @@ RSpec.describe BBK::App::Dispatcher do
       expect(consumer).to receive(:ack).with(incoming, answer: answer_message)
       subject.send(:send_results, incoming, results)
       futures = publisher.futures
-      expect(futures.size).to eq 6
+      expect(futures.size).to eq 5
       futures.each(&:resolve)
       sleep 0.1
     end

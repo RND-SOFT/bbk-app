@@ -10,6 +10,8 @@ require 'bbk/utils/proxy_logger'
 module BBK
   module App
 
+    class InvalidAnswersMessagesCountError < StandardError; end
+
     class SimplePoolFactory
 
       def self.call(pool_size, queue_size)
@@ -32,7 +34,8 @@ module BBK
       attr_accessor :force_quit
       attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
-      ANSWER_DOMAIN = 'answer'
+      ANSWER_DOMAIN = 'answer'.freeze
+      DEFAULT_PROTOCOL = 'default'.freeze
 
       def initialize(observer, pool_size: 3, logger: BBK::App.logger, pool_factory: SimplePoolFactory, stream_strategy: QueueStreamStrategy)
         @observer = observer
@@ -52,6 +55,7 @@ module BBK
       end
 
       def register_publisher(publisher)
+        raise "Publisher support #{DEFAULT_PROTOCOL}" if publisher.protocols.include?(DEFAULT_PROTOCOL)
         publishers << publisher
       end
 
@@ -122,18 +126,19 @@ module BBK
         end
       end
 
-      protected
+      # process one message and sending existed results messages
+      def process(message)
+        results = execute_message(message)
+        logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
+        send_results(message, results).value
+      rescue StandardError => e
+        logger.error "Failed processing message: #{e.inspect}"
+        ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
+        message.nack(error: e)
+        close if force_quit
+      end
 
-        def process(message)
-          results = execute_message(message)
-          logger.debug "There are #{results.count} results to send from #{message.headers[:message_id]}..."
-          send_results(message, results).value
-        rescue StandardError => e
-          logger.error "Failed processing message: #{e.inspect}"
-          ActiveSupport::Notifications.instrument 'dispatcher.exception', msg: message, exception: e
-          message.nack(error: e)
-          close if force_quit
-        end
+      protected
 
         def process_message(message)
           matched, processor = find_processor(message)
@@ -176,8 +181,12 @@ module BBK
         def send_results(incoming, results)
           message_id = incoming.headers[:message_id]
 
-          answer = results.find {|msg| msg.route.domain == ANSWER_DOMAIN }
-          Concurrent::Promises.zip_futures(*results.map do |result|
+          answers, sended_messages = results.partition { _1.route.domain == ANSWER_DOMAIN }
+          # allowed only one answer message
+          raise InvalidAnswersMessagesCountError.new("Get #{asnwers.size} on processing message with id=#{message_id}") if answers.size > 1
+          
+          answer = answers.first
+          Concurrent::Promises.zip_futures(*sended_messages.map do |result|
                                              publish_result(result)
                                            end).then do |_successes|
             incoming.ack(answer: answer)
