@@ -269,6 +269,35 @@ RSpec.describe BBK::App::Dispatcher do
         subject.send(:publish_result, result_message)
       end.not_to raise_error
     end
+
+    context 'default publisher' do
+
+      let(:default_publisher) { MockPublisher.new } 
+
+      before do
+        subject.default_publisher = default_publisher
+      end
+
+      it 'result with default scheme' do
+        result_message = BBK::App::Dispatcher::Result.new(
+          'example.com',
+          OpenStruct.new(headers: {}, payload: {})
+        )
+        expect(default_publisher).to receive(:publish)
+        subject.send(:publish_result, result_message)
+      end
+
+      it 'result without scheme' do
+        result_message = BBK::App::Dispatcher::Result.new(
+          "#{subject.class::DEFAULT_PROTOCOL}://example.com",
+          OpenStruct.new(headers: {}, payload: {})
+        )
+        expect(default_publisher).to receive(:publish)
+        subject.send(:publish_result, result_message)
+      end
+
+    end
+
   end
 
   describe '#send_results' do
@@ -281,7 +310,7 @@ RSpec.describe BBK::App::Dispatcher do
       expect(consumer).to receive(:ack).with(incoming, answer: answer_message)
       subject.send(:send_results, incoming, results)
       futures = publisher.futures
-      expect(futures.size).to eq 6
+      expect(futures.size).to eq 5
       futures.each(&:resolve)
       sleep 0.1
     end

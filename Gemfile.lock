@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bbk-app (1.0.0)
+    bbk-app (1.1.0)
       activesupport
       bbk-utils (> 1.0.1)
       timeouter
@@ -29,8 +29,8 @@ GEM
       descendants_tracker (~> 0.0.4)
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
-    bbk-utils (1.0.1.72735)
-      activesupport (~> 6.0)
+    bbk-utils (1.0.1.147183)
+      activesupport (>= 6.0)
       russian
     bunny (2.19.0)
       amq-protocol (~> 2.3, >= 2.3.1)
@@ -122,7 +122,7 @@ GEM
       virtus (~> 1.0)
     russian (0.6.0)
       i18n (>= 0.5.0)
-    set (1.0.2)
+    set (1.0.3)
     sexp_processor (4.16.0)
     simplecov (0.21.2)
       docile (~> 1.1)
