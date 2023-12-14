@@ -99,7 +99,7 @@ module BBK
           end
         end
 
-        @stream_strategy.stop(5)
+        @stream_strategy&.stop(5)
 
         consumers.each do |cons|
           begin
