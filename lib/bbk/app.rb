@@ -5,6 +5,7 @@ require 'bbk/app/matchers'
 require 'bbk/app/middlewares'
 require 'bbk/app/dispatcher'
 require 'bbk/app/processors'
+require 'bbk/app/domains_set'
 require 'bbk/utils/logger'
 
 module BBK

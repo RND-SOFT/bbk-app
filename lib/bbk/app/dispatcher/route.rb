@@ -30,6 +30,10 @@ module BBK
           end
         end
 
+        def params
+          @params ||= Hash[URI.decode_www_form(uri.query.presence || '')] 
+        end
+
       end
     end
   end
