@@ -183,7 +183,7 @@ module BBK
 
           answers, sended_messages = results.partition { _1.route.domain == ANSWER_DOMAIN }
           # allowed only one answer message
-          raise InvalidAnswersMessagesCountError.new("Get #{asnwers.size} on processing message with id=#{message_id}") if answers.size > 1
+          raise InvalidAnswersMessagesCountError.new("Get #{answers.size} on processing message with id=#{message_id}") if answers.size > 1
           
           answer = answers.first
           Concurrent::Promises.zip_futures(*sended_messages.map do |result|
