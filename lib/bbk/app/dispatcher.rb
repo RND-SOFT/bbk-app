@@ -31,7 +31,7 @@ module BBK
 
     class Dispatcher
 
-      attr_accessor :force_quit
+      attr_accessor :force_quit, :pool_size
       attr_reader :consumers, :publishers, :observer, :middlewares, :logger
 
       ANSWER_DOMAIN = 'answer'.freeze
