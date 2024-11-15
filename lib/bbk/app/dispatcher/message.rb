@@ -2,6 +2,7 @@ module BBK
   module App
     class Dispatcher
       class Message
+
         attr_reader :consumer, :delivery_info, :headers, :body
 
         def initialize(consumer, delivery_info, headers, body, *_args, **_kwargs)
@@ -47,10 +48,12 @@ module BBK
         def to_h
           {
             headers: headers,
-            body: body
+            body:    body
           }
         end
+
       end
     end
   end
 end
+
