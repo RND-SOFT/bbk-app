@@ -1,5 +1,5 @@
 RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
-  let(:consumer) { double }
+  let(:consumer) { double(stop: nil) }
 
   let(:delivery_info) do
     {
@@ -55,9 +55,10 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
     end
 
     describe '#ack' do
+      let(:answer) { double(BBK::App::Dispatcher::Result, route: nil, message: nil) }
       it do
-        expect(consumer).to receive(:ack).with(message, 1, 2, answer: :answer, a1: :a1)
-        subject.ack(1, 2, answer: :answer, a1: :a1)
+        expect(consumer).to receive(:ack).with(message, 1, 2, answer: answer, a1: :a1)
+        subject.ack(1, 2, answer: answer, a1: :a1)
       end
     end
 
@@ -91,6 +92,5 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
         expect(first_call).to eq(message.reply_message_id(addon))
       }
     end
-
   end
 end

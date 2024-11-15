@@ -16,7 +16,7 @@ module BBK
         def delivery_info: () -> untyped
         def body: () -> String
 
-        def ack: (*untyped, ?answer: Result?, **untyped) -> void
+        def ack: (*untyped, ?answer: _Result?, **untyped) -> void
         def nack: (*untyped, ?error: untyped, **untyped) -> void
         def message_id: () -> String
       end

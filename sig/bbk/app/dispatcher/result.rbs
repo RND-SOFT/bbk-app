@@ -1,9 +1,14 @@
 module BBK
   module App
     class Dispatcher
+
+      interface _Result
+        def route: () -> Route
+        def message: () -> _Message
+      end
+
       class Result
-        attr_accessor route: Route
-        attr_accessor message: _Message
+        include _Result
         
         def initialize: (String|Route route, _Message message) -> void
       end

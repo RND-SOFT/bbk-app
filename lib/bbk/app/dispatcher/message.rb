@@ -14,7 +14,7 @@ module BBK
         # Lazy body parsing
         def payload
           @payload ||= begin
-            JSON(body).with_indifferent_access
+            JSON.parse(@body).with_indifferent_access
           rescue StandardError
             {}.with_indifferent_access
           end
