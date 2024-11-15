@@ -2,8 +2,9 @@ PATH
   remote: .
   specs:
     bbk-app (1.1.1)
-      activesupport
+      activesupport (>= 6.0)
       bbk-utils (> 1.0.1)
+      oj
       timeouter
 
 GEM
@@ -32,6 +33,7 @@ GEM
     bbk-utils (1.0.1.147183)
       activesupport (>= 6.0)
       russian
+    bigdecimal (3.1.8)
     bunny (2.19.0)
       amq-protocol (~> 2.3, >= 2.3.1)
       sorted_set (~> 1, >= 1.0.2)
@@ -66,6 +68,10 @@ GEM
     launchy (2.5.0)
       addressable (~> 2.7)
     minitest (5.15.0)
+    oj (3.16.7)
+      bigdecimal (>= 3.0)
+      ostruct (>= 0.2)
+    ostruct (0.6.1)
     parallel (1.21.0)
     parser (3.0.3.2)
       ast (~> 2.4.1)
