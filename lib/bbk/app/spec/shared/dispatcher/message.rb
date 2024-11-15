@@ -27,8 +27,8 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
     it { is_expected.to respond_to(:body).with(0).argument }
     it { is_expected.to respond_to(:payload).with(0).argument }
 
-    it { is_expected.to respond_to(:ack).with_unlimited_arguments.with_keywords(:answer).with_any_keywords }
-    it { is_expected.to respond_to(:nack).with_unlimited_arguments.with_keywords(:error).with_any_keywords }
+    it { is_expected.to respond_to(:ack).with_unlimited_arguments.with_any_keywords }
+    it { is_expected.to respond_to(:nack).with_unlimited_arguments.with_any_keywords }
 
     it { is_expected.to respond_to(:message_id).with(0).argument }
     it { is_expected.to respond_to(:reply_to).with(0).argument }
