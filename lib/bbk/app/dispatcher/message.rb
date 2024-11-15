@@ -1,3 +1,5 @@
+require 'oj'
+
 module BBK
   module App
     class Dispatcher
