@@ -2,7 +2,7 @@ RSpec.describe BBK::App::Dispatcher do
   subject { described_class.new observer }
 
   let(:consumer) { MockConsumer.new }
-  let(:incoming) { BBK::App::Dispatcher::Message.new(consumer, {}, {}, {}) }
+  let(:incoming) { BBK::App::Dispatcher::Message.new(consumer, {}, {}, '{}') }
   let(:observer) { ObserverMock.new }
   let(:result_message) do
     BBK::App::Dispatcher::Result.new(

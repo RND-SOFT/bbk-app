@@ -3,15 +3,19 @@ module BBK
     class Dispatcher
       class Message
 
-        attr_reader :consumer, :delivery_info, :headers, :payload, :body
+        attr_reader :consumer, :delivery_info, :headers, :body
 
         def initialize(consumer, delivery_info, headers, body, *_args, **_kwargs)
           @consumer = consumer
           @delivery_info = delivery_info
           @headers = headers.to_h.with_indifferent_access
           @body = body
-          @payload = begin
-            JSON(body).with_indifferent_access
+        end
+
+        # Lazy body parsing
+        def payload
+          @payload ||= begin
+            JSON.parse(@body).with_indifferent_access
           rescue StandardError
             {}.with_indifferent_access
           end
@@ -26,7 +30,15 @@ module BBK
         end
 
         def message_id
-          raise NotImplementedError
+          raise NotImplementedError.new("#{self.class.name} does not implement #{__method__} method")
+        end
+
+        def reply_to
+          raise NotImplementedError.new("#{self.class.name} does not implement #{__method__} method")
+        end
+
+        def user_id
+          raise NotImplementedError.new("#{self.class.name} does not implement #{__method__} method")
         end
 
         def reply_message_id(addon)
