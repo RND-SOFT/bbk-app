@@ -9,12 +9,12 @@ services:
     image: bbk-app-tests:2.5
     working_dir: /home/app
     
-  test-3.0:
+  test-3.2:
     build:
       context: .
       args:
-        RUBY_VERSION: 3.0
-    image: bbk-app-tests:3.0
+        RUBY_VERSION: 3.2
+    image: bbk-app-tests:3.2
     environment:
       - RBS_TEST_TARGET
       - RBS_TEST_OPT
