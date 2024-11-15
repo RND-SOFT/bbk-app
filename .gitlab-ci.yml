@@ -7,7 +7,7 @@ variables:
   BUILDVERSION: ${CI_PIPELINE_ID}
 
 .test:
-  image: rnds/ruby:3.2-test
+  image: rnds/ruby:3.0-test
   stage: tests
   variables:
     COMPOSE_PROJECT_NAME: bbkutils_${CI_PIPELINE_ID}_${CI_JOB_ID}
