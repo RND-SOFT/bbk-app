@@ -6,5 +6,5 @@ RSpec.describe BBK::App::Dispatcher::Message do
   include_examples 'BBK::App::Dispatcher::Message' do
     subject(:message) { described_class.new(consumer, delivery_info, headers, body) }
   end
-
 end
+

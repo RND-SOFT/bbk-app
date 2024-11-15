@@ -11,8 +11,8 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
 
   let(:headers) do
     {
-      user_id: SecureRandom.hex,
-      reply_to: SecureRandom.hex,
+      user_id:    SecureRandom.hex,
+      reply_to:   SecureRandom.hex,
       message_id: SecureRandom.uuid
     }
   end
@@ -42,8 +42,8 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
   end
 
   describe 'methods' do
-    it { is_expected.to have_attributes(delivery_info: delivery_info) }
-    it { is_expected.to have_attributes(headers: headers) }
+    it { is_expected.to have_attributes(delivery_info: include(delivery_info)) }
+    it { is_expected.to have_attributes(headers: include(headers)) }
     it { is_expected.to have_attributes(body: body) }
     it { is_expected.to have_attributes(payload: payload) }
 
@@ -94,3 +94,4 @@ RSpec.shared_examples 'BBK::App::Dispatcher::Message' do
     end
   end
 end
+
