@@ -1,7 +1,7 @@
 require 'bbk/app/spec'
 
 RSpec.describe BBK::App::Spec::Dispatcher::Message do
-  let(:consumer){ double }
+  let(:consumer){ double(stop: nil) }
   let(:message_id){ SecureRandom.hex }
   subject { described_class.new(consumer, {}, { message_id: message_id }, '{}') }
 
