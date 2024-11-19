@@ -54,6 +54,10 @@ module BBK
           }
         end
 
+        def inspect # :nodoc:
+          "#<#{self.class.name} @consumer=#{consumer.class.name}, @headers=#{headers.inspect}>"
+        end
+
       end
     end
   end
