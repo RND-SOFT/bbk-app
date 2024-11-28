@@ -7,6 +7,10 @@ module BBK
         class Message < BBK::App::Dispatcher::Message
 
 
+          def protocol
+            :test
+          end
+
           def message_id
             headers[:message_id]
           end
