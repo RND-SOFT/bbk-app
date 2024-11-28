@@ -43,6 +43,10 @@ module BBK
           raise NotImplementedError.new("#{self.class.name} does not implement #{__method__} method")
         end
 
+        def protocol
+          raise NotImplementedError.new("#{self.class.name} does not implement #{__method__} method")
+        end
+
         def reply_message_id(addon)
           Digest::SHA1.hexdigest("#{addon}#{message_id}")
         end
